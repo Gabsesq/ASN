@@ -38,6 +38,18 @@ def copy_xlsx_data(uploaded_file, dest_file):
     for upload_cell, copy_cell in data_map.items():
         source_ws[copy_cell] = uploaded_ws[upload_cell].value
 
+    # Track numbers from A21 and below, copy to A20 in the copy
+    row = 21
+    data_to_copy = []
+    while uploaded_ws[f'A{row}'].value is not None:
+        data_to_copy.append(uploaded_ws[f'A{row}'].value)
+        row += 1
+
+    # Paste data starting from A20 in the backup copy
+    for i, value in enumerate(data_to_copy):
+        source_ws[f'A{20 + i}'] = value
+
+
     # Save the updated copy
     source_wb.save(dest_file)
 
@@ -64,6 +76,21 @@ def convert_xls_data(uploaded_file, dest_file):
     for (row, col), copy_cell in data_map.items():
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
+
+    # Track numbers from A21 and below, copy to A20 in the copy
+        row = 21  # Start from row 21 in the uploaded file
+        copy_row = 20  # Start pasting from row 20 in the destination file
+        while True:
+                try:
+                    value = xls_sheet.cell_value(row - 1, 0)  # Column A is index 0
+                    if value:
+                        source_ws[f'A{copy_row}'] = value
+                    else:
+                        break
+                    row += 1
+                    copy_row += 1
+                except IndexError:
+                    break
 
     # Save the updated copy
     source_wb.save(dest_file)
