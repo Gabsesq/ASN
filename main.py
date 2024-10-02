@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import os
 from processors.Chewy import process_chewy
+from processors.ChewyLabel import process_label
 
 app = Flask(__name__)
 
@@ -31,6 +32,7 @@ def upload_file():
             # Route file processing based on selected company
             if company == 'chewy':
                 process_chewy(file_path)
+                process_label(file_path)
             elif company == 'companyB':
                 process_companyB(file_path)
             elif company == 'companyC':
