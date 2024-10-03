@@ -162,9 +162,10 @@ def convert_xls_data(uploaded_file, dest_file):
 
         # Now copy "mixed" into J14 and K14 down for the length of other items
         for i in range(14, 14 + column_length):  # Loop through rows starting at J14 and K14
-            source_ws[f'J{i}'] = "mixed"  # Paste "mixed" into J14 and down
-            source_ws[f'K{i}'] = "mixed"  # Paste "mixed" into K14 and down
-            print(f"Pasting 'mixed' into J{i} and K{i}")  # Debugging print
+            source_ws[f'J{i}'] = "NA"  # Paste "mixed" into J14 and down
+            source_ws[f'K{i}'] = "NA"  # Paste "mixed" into K14 and down
+            source_ws[f'E{i}'] = "NA"  # Paste "mixed" into K14 and down
+            print(f"Pasting 'NA' into J{i}, E{i}, and K{i}")  # Debugging print
 
         # Now copy "mixed" into J14 and K14 down for the length of other items
         for i in range(14, 14 + column_length):  # Loop through rows starting at J14 and K14
@@ -187,9 +188,9 @@ def convert_xls_data(uploaded_file, dest_file):
             source_ws['G14'] = "mixed"
             source_ws['H14'] = "mixed"
             source_ws['I14'] = "mixed"
-            source_ws['J14'] = "mixed"
-            source_ws['K14'] = "mixed"
-            source_ws['L14'] = 1
+            source_ws['J14'] = "NA"
+            source_ws['K14'] = "NA"
+            source_ws['L14'] = "mixed"
             source_ws['M14'] = 1
 
             # Debugging print statements for the static values
