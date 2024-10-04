@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='button.css') }}">
+</head>
+<body>
+    <h1>{{ message }}</h1>  <!-- Success or error message here -->
+    <button class="button-8" onclick="window.location.href='/'">Go Back</button>  <!-- Styled Back button -->
+</body>
+</html>

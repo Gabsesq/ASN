@@ -17,13 +17,13 @@ def upload_form():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return jsonify({'message': 'No file part'}), 400
+        return render_template('back.html', message='No file part'), 400
 
     file = request.files['file']
     company = request.form.get('company')  # Get selected company from dropdown
 
     if file.filename == '':
-        return jsonify({'message': 'No selected file'}), 400
+        return render_template('back.html', message='No selected file'), 400
 
     if file:
         file_path = os.path.join(UPLOAD_FOLDER, file.filename)
@@ -41,9 +41,9 @@ def upload_file():
 
         except Exception as e:
             print(f"Error: {e}")
-            return jsonify({'message': f'Error processing file: {str(e)}'}), 500
+            return render_template('back.html', message=f'Error processing file: {str(e)}'), 500
 
-        return jsonify({'message': 'File processed successfully!'})
+        return render_template('back.html', message='File processed successfully!')
 
 if __name__ == '__main__':
     app.run(debug=True)
