@@ -32,7 +32,37 @@
     </div>
 </form>
 
+<!-- Style the drag-and-drop area -->
+<style>
+    #drop-area {
+        border: 2px dashed #ccc;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        width: 100%;          /* Set a width */
+        max-width: 500px;      /* Optional: Limit the max width */
+        margin: 20px auto;     /* Center it horizontally */
+        background-color: #f9f9f9;  /* Light background for better visibility */
+    }
 
+    #drop-area.highlight {
+        border-color: purple;  /* Highlight border when dragging over */
+    }
+
+    .button-8 {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #f3d9e4;
+        color: rgb(119, 53, 75);
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;  /* Add some space between the drop area and the button */
+    }
+
+    #fileElem {
+        display: none;  /* Keep the file input hidden */
+    }
+</style>
 
 <!-- JavaScript -->
 <script>
