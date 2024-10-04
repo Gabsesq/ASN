@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, render_template, send_from_directory
 import os
 from processors.Chewy import process_chewy
 from processors.ChewyLabel import process_label
@@ -7,8 +7,13 @@ from processors.TSC import process_TSC
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'uploads'
+FINISHED_FOLDER = 'Finished/Chewy'  # Assuming processed files go into a subfolder of Finished
+
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+if not os.path.exists(FINISHED_FOLDER):
+    os.makedirs(FINISHED_FOLDER)
 
 @app.route('/')
 def upload_form():
@@ -30,20 +35,37 @@ def upload_file():
         file.save(file_path)
 
         try:
+            processed_files = []  # List to store the paths of processed files
+
             # Route file processing based on selected company
             if company == 'chewy':
+                # Call your processing functions
                 process_chewy(file_path)
                 process_label(file_path)
+                
+                # Add processed files to the list (assuming the filenames are based on PO numbers)
+                for filename in os.listdir(FINISHED_FOLDER):
+                    if filename.endswith('.xlsx'):
+                        processed_files.append(filename)
+
             elif company == 'TSC':
                 process_TSC(file_path)
+                processed_files.append(file.filename)  # Append the processed file to list
             elif company == 'companyC':
                 process_companyC(file_path)
+                processed_files.append(file.filename)  # Append the processed file to list
 
         except Exception as e:
             print(f"Error: {e}")
             return render_template('back.html', message=f'Error processing file: {str(e)}'), 500
 
-        return render_template('back.html', message='File processed successfully!')
+        # Return the success page with the list of processed files
+        return render_template('back.html', message='File processed successfully!', files=processed_files)
+
+# Serve files from the Finished folder
+@app.route('/finished/<filename>')
+def finished_file(filename):
+    return send_from_directory(FINISHED_FOLDER, filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
