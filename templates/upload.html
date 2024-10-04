@@ -1,12 +1,127 @@
 <h2>Upload an Excel File</h2>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File</title>
+    <!-- Link to CSS files in static folder -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='button.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+
 <form id="uploadForm" enctype="multipart/form-data" method="POST" action="/upload">
-    <label for="company">Select Company:</label>
-    <select id="company" name="company">
+    
+    <select id="company" name="company" required class="select-8">
+        <option value="">-- Select a Company --</option>
         <option value="chewy">Chewy</option>
-        <option value="companyB">Company B</option>
+        <option value="TSC">TSC</option>
         <option value="companyC">Company C</option>
-        <!-- Add more companies as needed -->
-    </select><br><br>
-    <input type="file" id="excelFile" name="file" accept=".xlsx, .xls" required>
-    <button type="submit">Upload and Transfer Data</button>
+    </select>
+    <br><br>
+
+    <!-- Drag and Drop section (hidden by default) -->
+    <div id="drop-area" style="display: none;">
+        <p>Drag and drop your Excel file here or click to select</p>
+        <input type="file" id="fileElem" name="file" accept=".xlsx, .xls" style="display:none;">
+        <div class="button-8" id="browseButton">Browse File</div>
+    </div>
+
+    <button type="submit" class="button-8">Upload and Transfer Data</button>
+    <div id="spinner" style="display:none;">
+        <p>Uploading...</p>
+    </div>
 </form>
+
+<!-- Style the drag-and-drop area -->
+<style>
+    #drop-area {
+        border: 2px dashed #ccc;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        width: 100%;          /* Set a width */
+        max-width: 500px;      /* Optional: Limit the max width */
+        margin: 20px auto;     /* Center it horizontally */
+        background-color: #f9f9f9;  /* Light background for better visibility */
+    }
+
+    #drop-area.highlight {
+        border-color: purple;  /* Highlight border when dragging over */
+    }
+
+    .button-8 {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #f3d9e4;
+        color: rgb(119, 53, 75);
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;  /* Add some space between the drop area and the button */
+    }
+
+    #fileElem {
+        display: none;  /* Keep the file input hidden */
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    const companySelect = document.getElementById('company');
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('fileElem');
+    const browseButton = document.getElementById('browseButton');  // Button to trigger file dialog
+
+    // Hide the drop area until a company is selected
+    companySelect.addEventListener('change', function() {
+        if (this.value) {
+            dropArea.style.display = 'block';  // Show drop area when a company is selected
+        } else {
+            dropArea.style.display = 'none';  // Hide drop area when no company is selected
+        }
+    });
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight drop area when file is dragged over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+    });
+
+    // Handle dropped files
+    dropArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    });
+
+    // Click event on the drop area, opening file input
+    browseButton.addEventListener('click', () => {
+        fileInput.click();  // Trigger the hidden file input
+    });
+
+    fileInput.addEventListener('change', () => {
+        const files = fileInput.files;
+        if (files.length > 0) {
+            handleFiles(files);  // Process files if selected via the file input
+        }
+    });
+
+    // Attach dropped files to the file input for form submission
+    function handleFiles(files) {
+        if (files.length > 0) {
+            fileInput.files = files;  // Attach files to the hidden input element
+        }
+    }
+</script>

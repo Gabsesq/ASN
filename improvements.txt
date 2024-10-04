@@ -1,0 +1,4 @@
+UI
+TSC - ask for Shipping # beforehand
+Chewy - ask for Bill of Lading
+Chewy - mixed labels, may use OPENAI? Or think out some kind of search and organize
