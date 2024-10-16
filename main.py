@@ -5,6 +5,7 @@ from processors.ChewyLabel import process_label
 from processors.TSC import process_TSC
 from processors.PetSupermarketASN import process_PetSuperASN
 from processors.PetSupermarketLabel import process_PetSuperLabel
+from processors.ThriveASN import process_ThriveASN
 
 
 app = Flask(__name__)
@@ -58,6 +59,10 @@ def upload_file():
                 process_PetSuperLabel(file_path)
                 process_PetSuperASN(file_path)
                 processed_files.append(file.filename)  # Append the processed file to list
+            elif company == 'Thrive':
+                process_ThriveASN(file_path)
+                processed_files.append(file.filename)  # Append the processed file to list
+
 
         except Exception as e:
             print(f"Error: {e}")

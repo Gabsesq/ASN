@@ -37,7 +37,7 @@ def copy_xlsx_data(uploaded_file, dest_file):
     value_from_upload = uploaded_ws['C4'].value
 
     if value_from_upload is not None:
-        for i in range(20, 20 + count):
+        for i in range(17, 17 + count):
             source_ws[f'B{i}'] = value_from_upload
 
     source_wb.save(dest_file)
@@ -61,8 +61,8 @@ def convert_xls_data(uploaded_file, dest_file):
         source_ws[copy_cell] = value
 
     # Track numbers from A21 and below, copy to A20 in the copy
-    row = 21
-    copy_row = 20
+    row = 18
+    copy_row = 17
     column_length = 0
 
     while True:
@@ -81,7 +81,7 @@ def convert_xls_data(uploaded_file, dest_file):
     print(f"Length of Column A: {column_length}")  # Debugging print for column length
 
     # Now copy from upload file column H (starting at H21) down to E20 in the copy file
-    for i in range(21, 21 + column_length):  # Loop through rows in column H in the upload file
+    for i in range(18, 18 + column_length):  # Loop through rows in column H in the upload file
         value_from_H = xls_sheet.cell_value(i - 1, 7)  # H21 is (row 20, col 7) in zero-based indexing
         source_ws[f'E{i - 1}'] = value_from_H  # Paste into E20 and down
         print(f"Pasting {value_from_H} from H{i} to E{i - 1}")  # Debugging print
@@ -89,7 +89,7 @@ def convert_xls_data(uploaded_file, dest_file):
     # Now copy value from C4 into B column (B20 and down for column_length rows)
     value_from_upload_C4 = xls_sheet.cell_value(3, 2)
     if value_from_upload_C4 is not None:
-        for i in range(20, 20 + column_length):  # Copy value to B20 through B (dynamic based on column A length)
+        for i in range(17, 17 + column_length):  # Copy value to B20 through B (dynamic based on column A length)
             source_ws[f'B{i}'] = value_from_upload_C4
             print(f"Pasting {value_from_upload_C4} into B{i}")  # Debugging print
     else:
@@ -98,38 +98,38 @@ def convert_xls_data(uploaded_file, dest_file):
     # Copy date from H4 into C column (C20 and down for column_length rows)
     value_from_upload_H4 = xls_sheet.cell_value(3, 7)
     if value_from_upload_H4 is not None:
-        for i in range(20, 20 + column_length):  # Copy value to C20 through C (dynamic based on column A length)
+        for i in range(17, 17 + column_length):  # Copy value to C20 through C (dynamic based on column A length)
             source_ws[f'C{i}'] = value_from_upload_H4
             print(f"Pasting date {value_from_upload_H4} into C{i}")  # Debugging print
     else:
         print("No date found in H4 or unable to read the value.")  # Debugging if H4 is None
 
     # Now copy from upload file column G (starting at G21) down to F20 in the copy file
-    for i in range(21, 21 + column_length):  # Loop through rows in column G in the upload file
+    for i in range(18, 18 + column_length):  # Loop through rows in column G in the upload file
         value_from_G = xls_sheet.cell_value(i - 1, 6)  # G21 is (row 20, col 6) in zero-based indexing
         source_ws[f'F{i - 1}'] = value_from_G  # Paste into F20 and down
         print(f"Pasting {value_from_G} from G{i} to F{i - 1}")  # Debugging print
 
     # Now copy from upload file column I (starting at I21) down to G20 in the copy file
-    for i in range(21, 21 + column_length):  # Loop through rows in column I in the upload file
+    for i in range(18, 18 + column_length):  # Loop through rows in column I in the upload file
         value_from_I = xls_sheet.cell_value(i - 1, 8)  # I21 is (row 20, col 8) in zero-based indexing
         source_ws[f'G{i - 1}'] = value_from_I  # Paste into G20 and down
         print(f"Pasting {value_from_I} from I{i} to G{i - 1}")  # Debugging print
 
     # Now copy from upload file column B (starting at B21) down to H20 in the copy file
-    for i in range(21, 21 + column_length):  # Loop through rows in column B in the upload file
+    for i in range(18, 18 + column_length):  # Loop through rows in column B in the upload file
         value_from_B = xls_sheet.cell_value(i - 1, 1)  # B21 is (row 20, col 1) in zero-based indexing
         source_ws[f'H{i - 1}'] = value_from_B  # Paste into H20 and down
         print(f"Pasting {value_from_B} from B{i} to H{i - 1}")  # Debugging print
 
     # Now copy from upload file column C (starting at C21) down to I20 in the copy file
-    for i in range(21, 21 + column_length):  # Loop through rows in column C in the upload file
+    for i in range(18, 18 + column_length):  # Loop through rows in column C in the upload file
         value_from_C = xls_sheet.cell_value(i - 1, 2)  # C21 is (row 20, col 2) in zero-based indexing
         source_ws[f'I{i - 1}'] = value_from_C  # Paste into I20 and down
         print(f"Pasting {value_from_C} from C{i} to I{i - 1}")  # Debugging print
 
     # Now copy from upload file column E (starting at E21) down to L20 in the copy file
-    for i in range(21, 21 + column_length):  # Loop through rows in column E in the upload file
+    for i in range(18, 18 + column_length):  # Loop through rows in column E in the upload file
         value_from_E = xls_sheet.cell_value(i - 1, 4)  # E21 is (row 20, col 4) in zero-based indexing
         source_ws[f'L{i - 1}'] = value_from_E  # Paste into L20 and down
         print(f"Pasting {value_from_E} from E{i} to L{i - 1}")  # Debugging print
