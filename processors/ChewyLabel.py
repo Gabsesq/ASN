@@ -1,6 +1,10 @@
 from openpyxl import load_workbook
 import xlrd
 import datetime
+import os
+from ExcelHelpers import (
+    format_cells_as_text, align_cells_left
+)
 
 # Define source files and destination copies for Chewy
 source_label_xlsx = "assets\Chewy\Chewy UCC128 Label Request - Copy.xlsx"
@@ -11,6 +15,9 @@ def copy_xlsx_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_label_xlsx)
     uploaded_ws = uploaded_wb.active
     source_ws = source_wb.active
+
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
 
     # Mapping uploaded cells to copy cells
     data_map = {
@@ -47,7 +54,8 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_label_xlsx)
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
-
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
         # 1. Gather the QTY value first
     QTY_total = 0
     row = 21
@@ -206,14 +214,24 @@ def convert_xls_data(uploaded_file, dest_file):
 def process_label(file_path):
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
 
+    # Determine if the file is XLSX or XLS
     if file_path.endswith('.xlsx'):
         uploaded_wb = load_workbook(file_path)
         po_number = uploaded_wb.active['C4'].value
-        backup_file = f"Finished/Chewy/Chewy UCC128 Label Request PO {po_number} {current_date}.xlsx"
-        copy_xlsx_data(file_path, backup_file)
 
     elif file_path.endswith('.xls'):
         xls_book = xlrd.open_workbook(file_path)
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
-        backup_file = f"Finished/Chewy/Chewy UCC128 Label Request PO {po_number} {current_date}.xlsx"
+
+    # Create the folder path using the PO number
+    folder_path = f"Finished/Chewy/{po_number}"
+    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
+
+    # Define the backup file path
+    backup_file = f"{folder_path}/Chewy UCC128 Label Request PO {po_number} {current_date}.xlsx"
+
+    # Perform the copy or conversion based on file type
+    if file_path.endswith('.xlsx'):
+        copy_xlsx_data(file_path, backup_file)
+    elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
