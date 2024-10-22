@@ -8,6 +8,7 @@ from processors.PetSupermarketLabel import process_PetSuperLabel
 from processors.ThriveASN import process_ThriveASN
 from processors.MurdochsASN import process_MurdochsASN
 from processors.MurdochsLabel import process_MurdochsLabel
+from processors.ScheelsASN import process_ScheelsASN
 
 app = Flask(__name__)
 
@@ -67,6 +68,10 @@ def upload_file():
                 process_MurdochsASN(file_path)
                 process_MurdochsLabel(file_path)
                 processed_files.append(file.filename)  # Append the processed file to list
+            elif company == 'Scheels':
+                process_ScheelsASN(file_path)
+                processed_files.append(file.filename)  # Append the processed file to list
+
 
 
 
