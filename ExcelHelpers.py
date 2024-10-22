@@ -59,30 +59,25 @@ def manyToMany(xls_sheet, source_ws, start_row, start_col, dest_col, dest_start_
 def oneToMany(xls_sheet, source_ws, row, col, target_column, start_row, column_length):
     """
     Copies a value from one specific cell and pastes it into multiple rows in a target column.
-
-    Parameters:
-        xls_sheet: The uploaded XLS sheet object.
-        source_ws: The destination worksheet object.
-        row (int): Zero-based row index of the source cell.
-        col (int): Zero-based column index of the source cell.
-        target_column (str): The column letter in the destination sheet (e.g., 'E').
-        start_row (int): The starting row in the destination sheet (e.g., 8).
-        column_length (int): Number of rows to paste the value into.
     """
     try:
         # Fetch the value from the specific cell
         value = xls_sheet.cell_value(row, col)
         print(f"Copying value '{value}' from ({row + 1}, {col + 1})")
 
-        # Paste the value into the specified column for the given length
-        for i in range(start_row, start_row + column_length):
-            source_ws[f'{target_column}{i}'] = value
-            print(f"Pasting '{value}' into {target_column}{i}")
+        # Ensure exactly `column_length` rows are pasted without overshooting
+        for i in range(column_length):
+            current_row = start_row + i  # Adjust to paste into the correct row
+            source_ws[f'{target_column}{current_row}'] = value
+            print(f"Pasting '{value}' into {target_column}{current_row}")
 
     except IndexError as e:
         print(f"Error accessing cell ({row}, {col}): {str(e)}")
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
+
+
+
 
 def typedValue(source_ws, static_value, target_column, start_row, column_length):
     """

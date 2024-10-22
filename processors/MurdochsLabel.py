@@ -104,8 +104,8 @@ def convert_xls_data(uploaded_file, dest_file):
         try:
             if column_length > 0:
                 manyToMany(xls_sheet, source_ws, 23, 6, 'F', 14, column_length)  # A23 to A19       Part number
-                manyToMany(xls_sheet, source_ws, 23, 1, 'G', 14, column_length)  # B23 to I19       QTY
-                manyToMany(xls_sheet, source_ws, 23, 1, 'H', 14, column_length)  # B23 to I19       QTY
+                # manyToMany(xls_sheet, source_ws, 23, 1, 'G', 14, column_length)  # B23 to I19       QTY
+                # manyToMany(xls_sheet, source_ws, 23, 1, 'H', 14, column_length)  # B23 to I19       QTY
 
             else:
                 print("No data found in column A starting from row 23.")

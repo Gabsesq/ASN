@@ -87,6 +87,12 @@ def convert_xls_data(uploaded_file, dest_file):
         manyToMany(xls_sheet, source_ws, 18, 2, 'H', 17, column_length)  # UOM
         manyToMany(xls_sheet, source_ws, 18, 8, 'I', 17, column_length)  # Description
 
+        # Sum the QTY values from column B (index 1) and place the total in E13
+        qty_total = sum_qty_values(xls_sheet, start_row=17, column_index=1, column_length=column_length)
+        source_ws['E13'] = qty_total
+        print(f"Total QTY placed in E13: {qty_total}")
+
+
         source_wb.save(dest_file)
         print(f"Saved file successfully as {dest_file}")
 
@@ -96,20 +102,48 @@ def convert_xls_data(uploaded_file, dest_file):
 def get_column_length(sheet, start_row):
     """Calculate the number of non-empty rows starting from a given row."""
     column_length = 0
-    while True:
+    total_rows = sheet.nrows  # Ensure we don't exceed the number of rows
+
+    while start_row <= total_rows:
         try:
             value = sheet.cell_value(start_row - 1, 0)  # Column A (index 0)
             print(f"Row {start_row}: Value in A = '{value}'")
+
             if value:
                 column_length += 1
                 start_row += 1
             else:
-                break
+                break  # Stop when we encounter an empty cell
         except IndexError as e:
             print(f"IndexError accessing row {start_row - 1}, column 0: {str(e)}")
             break
+
     print(f"Final Column Length: {column_length}")
-    return column_length
+    return max(1, column_length)  # Ensure at least 1 row is counted
+
+
+def sum_qty_values(sheet, start_row, column_index, column_length):
+    """Sum the QTY values from the specified column and return the total."""
+    qty_total = 0
+    for i in range(start_row, start_row + column_length):
+        try:
+            value = sheet.cell_value(i - 1, column_index)
+            print(f"Row {i}: Raw QTY value = '{value}'")
+
+            # Handle text-formatted numbers by converting them to float
+            if isinstance(value, str) and value.isnumeric():
+                value = float(value)
+
+            if isinstance(value, (int, float)):  # Ensure the value is numeric
+                qty_total += value
+            else:
+                print(f"Skipping non-numeric value at row {i}: {value}")
+        except IndexError as e:
+            print(f"IndexError at row {i - 1}, column {column_index}: {str(e)}")
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
+    print(f"Final QTY Total: {qty_total}")
+    return qty_total
 
 def process_TSC(file_path):
     """Main function to process TSC files."""
