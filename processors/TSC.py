@@ -1,135 +1,131 @@
 from openpyxl import load_workbook
 import xlrd
 import datetime
+from ExcelHelpers import (
+    oneToMany, typedValue, manyToMany, get_current_date, 
+    create_folder, extract_po_number, format_cells_as_text, align_cells_left, get_column_length
+)
 
-# Define source files and destination copies for Chewy
+# Define source file for TSC
 source_asn_xlsx = "assets/TSC/Blank TSC ASN.xlsx"
 
-# Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
+# Function to copy data from uploaded .xlsx file to the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
-    uploaded_wb = load_workbook(uploaded_file)
-    source_wb = load_workbook(source_asn_xlsx)
-    uploaded_ws = uploaded_wb.active
-    source_ws = source_wb.active
+    try:
+        uploaded_wb = load_workbook(uploaded_file)
+        source_wb = load_workbook(source_asn_xlsx)
+        uploaded_ws = uploaded_wb.active
+        source_ws = source_wb.active
 
-    # Mapping uploaded cells to copy cells
-    data_map = {
-        'B14': 'E3', 'D14': 'E4', 'E14': 'E5',
-        'J14': 'E6', 'K14': 'E7', 'L14': 'E8',
-        'C9': 'B11'
-    }
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
 
-    # Transfer data from the uploaded file to the backup copy
-    for upload_cell, copy_cell in data_map.items():
-        source_ws[copy_cell] = uploaded_ws[upload_cell].value
+        # Mapping uploaded cells to copy cells
+        data_map = {
+            'B14': 'E3', 'D14': 'E4', 'E14': 'E5',
+            'J14': 'E6', 'K14': 'E7', 'L14': 'E8',
+            'C9': 'B11'
+        }
 
-    # Track numbers from A21 and below, copy to A20 in the copy
-    row = 18
-    data_to_copy = []
-    while uploaded_ws[f'A{row}'].value is not None:
-        data_to_copy.append(uploaded_ws[f'A{row}'].value)
-        row += 1
+        # Transfer data with debugging
+        for upload_cell, copy_cell in data_map.items():
+            try:
+                value = uploaded_ws[upload_cell].value
+                source_ws[copy_cell] = value
+                print(f"Copied value '{value}' from {upload_cell} to {copy_cell}")
+            except Exception as e:
+                print(f"Error copying from {upload_cell} to {copy_cell}: {str(e)}")
 
-    for i, value in enumerate(data_to_copy):
-        source_ws[f'A{17 + i}'] = value
+        # Calculate dynamic column length starting from A18
+        column_length = get_column_length(uploaded_ws, start_row=18)
 
-    count = len(data_to_copy)
-    value_from_upload = uploaded_ws['C4'].value
+        # Copy value from 'C4' into 'B17' and down using oneToMany
+        oneToMany(uploaded_ws, source_ws, 3, 2, 'B', 17, column_length)
 
-    if value_from_upload is not None:
-        for i in range(17, 17 + count):
-            source_ws[f'B{i}'] = value_from_upload
+        source_wb.save(dest_file)
+        print(f"Saved file successfully as {dest_file}")
 
-    source_wb.save(dest_file)
+    except Exception as e:
+        print(f"Error in copy_xlsx_data: {str(e)}")
 
-# Function to convert .xls to .xlsx and transfer data to a backup of ASN copy
+# Function to convert and copy data from .xls files
 def convert_xls_data(uploaded_file, dest_file):
-    xls_book = xlrd.open_workbook(uploaded_file)
-    source_wb = load_workbook(source_asn_xlsx)
-    source_ws = source_wb.active
-    xls_sheet = xls_book.sheet_by_index(0)
+    try:
+        xls_book = xlrd.open_workbook(uploaded_file)
+        source_wb = load_workbook(source_asn_xlsx)
+        source_ws = source_wb.active
+        xls_sheet = xls_book.sheet_by_index(0)
 
-    # Mapping uploaded cells to copy cells
-    data_map = {
-        (13, 1): 'E3', (13, 3): 'E4', (13, 4): 'E5',
-        (13, 9): 'E6', (13, 10): 'E7', (13, 11): 'E8',
-        (8, 2): 'B11'
-    }
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
 
-    for (row, col), copy_cell in data_map.items():
-        value = xls_sheet.cell_value(row, col)
-        source_ws[copy_cell] = value
+        # Mapping uploaded cells to copy cells with error handling
+        data_map = {
+            (13, 1): 'E3', (13, 3): 'E4', (13, 4): 'E5',
+            (13, 9): 'E6', (13, 10): 'E7', (13, 11): 'E8',
+            (8, 2): 'B11'
+        }
+        for (row, col), copy_cell in data_map.items():
+            try:
+                value = xls_sheet.cell_value(row, col)
+                source_ws[copy_cell] = value
+                print(f"Copied value '{value}' from ({row}, {col}) to {copy_cell}")
+            except IndexError as e:
+                print(f"IndexError: ({row}, {col}) is out of range: {str(e)}")
+            except Exception as e:
+                print(f"Unexpected error copying ({row}, {col}) to {copy_cell}: {str(e)}")
 
-    # Track numbers from A21 and below, copy to A20 in the copy
-    row = 18
-    copy_row = 17
+        # Calculate dynamic column length starting from A17
+        column_length = get_column_length(xls_sheet, start_row=17)
+
+        # Perform many-to-many copy operations with debugging
+        manyToMany(xls_sheet, source_ws, 18, 0, 'A', 17, column_length)  # Item No
+        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length)    # Copy 'C4' to 'B17'
+        manyToMany(xls_sheet, source_ws, 18, 4, 'D', 17, column_length)  # UPS
+        manyToMany(xls_sheet, source_ws, 18, 7, 'E', 17, column_length)  # Buyer Part
+        manyToMany(xls_sheet, source_ws, 18, 6, 'F', 17, column_length)  # Vendor Part
+        manyToMany(xls_sheet, source_ws, 18, 1, 'G', 17, column_length)  # QTY
+        manyToMany(xls_sheet, source_ws, 18, 2, 'H', 17, column_length)  # UOM
+        manyToMany(xls_sheet, source_ws, 18, 8, 'I', 17, column_length)  # Description
+
+        source_wb.save(dest_file)
+        print(f"Saved file successfully as {dest_file}")
+
+    except Exception as e:
+        print(f"Error in convert_xls_data: {str(e)}")
+
+def get_column_length(sheet, start_row):
+    """Calculate the number of non-empty rows starting from a given row."""
     column_length = 0
-
     while True:
         try:
-            value = xls_sheet.cell_value(row - 1, 0)  # Column A is index 0 (zero-based)
+            value = sheet.cell_value(start_row - 1, 0)  # Column A (index 0)
+            print(f"Row {start_row}: Value in A = '{value}'")
             if value:
-                source_ws[f'A{copy_row}'] = value
-                row += 1
-                copy_row += 1
-                column_length += 1  # Increment the length count
+                column_length += 1
+                start_row += 1
             else:
                 break
-        except IndexError:
+        except IndexError as e:
+            print(f"IndexError accessing row {start_row - 1}, column 0: {str(e)}")
             break
+    print(f"Final Column Length: {column_length}")
+    return column_length
 
-    print(f"Length of Column A: {column_length}")  # Debugging print for column length
-
-    # Now copy value from C4 into B column (B20 and down for column_length rows)
-    value_from_upload_C4 = xls_sheet.cell_value(3, 2)
-    if value_from_upload_C4 is not None:
-        for i in range(17, 17 + column_length):  # Copy value to B20 through B (dynamic based on column A length)
-            source_ws[f'B{i}'] = value_from_upload_C4
-            print(f"Pasting {value_from_upload_C4} into B{i}")  # Debugging print
-    else:
-        print("No value found in C4 or unable to read the value.")  # Debugging if C4 is None
-
-
-    # VENDOR PART
-    for i in range(18, 18 + column_length):  # Loop through rows in column G in the upload file
-        value_from_G = xls_sheet.cell_value(i - 1, 6)  # G21 is (row 20, col 6) in zero-based indexing
-        source_ws[f'F{i - 1}'] = value_from_G  # Paste into F20 and down
-        print(f"Pasting {value_from_G} from G{i} to F{i - 1}")  # Debugging print
-
-   
-    # QTY
-    for i in range(18, 18 + column_length):  # Loop through rows in column B in the upload file
-        value_from_B = xls_sheet.cell_value(i - 1, 1)  # B21 is (row 20, col 1) in zero-based indexing
-        source_ws[f'H{i - 1}'] = value_from_B  # Paste into H20 and down
-        print(f"Pasting {value_from_B} from B{i} to G{i - 1}")  # Debugging print
-
-    # DESCRIPTION
-    for i in range(18, 18 + column_length):  # Loop through rows in column C in the upload file
-        value_from_C = xls_sheet.cell_value(i - 1, 2)  # C21 is (row 20, col 2) in zero-based indexing
-        source_ws[f'I{i - 1}'] = value_from_C  # Paste into I20 and down
-        print(f"Pasting {value_from_C} from I{i} to I{i - 1}")  # Debugging print
-
-    # UPC
-    for i in range(18, 18 + column_length):  # Loop through rows in column E in the upload file
-        value_from_E = xls_sheet.cell_value(i - 1, 4)  # E21 is (row 20, col 4) in zero-based indexing
-        source_ws[f'L{i - 1}'] = value_from_E  # Paste into L20 and down
-        print(f"Pasting {value_from_E} from E{i} to D{i - 1}")  # Debugging print
-
-    # Save the updated copy
-    source_wb.save(dest_file)
-
-# Main function to process Chewy files
 def process_TSC(file_path):
-    current_date = datetime.datetime.now().strftime("%m.%d.%Y")
+    """Main function to process TSC files."""
+    try:
+        current_date = get_current_date()
 
-    if file_path.endswith('.xlsx'):
-        uploaded_wb = load_workbook(file_path)
-        po_number = uploaded_wb.active['C4'].value
-        backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
-        copy_xlsx_data(file_path, backup_file)
+        if file_path.endswith('.xlsx'):
+            po_number = extract_po_number(file_path, is_xlsx=True)
+            backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
+            copy_xlsx_data(file_path, backup_file)
 
-    elif file_path.endswith('.xls'):
-        xls_book = xlrd.open_workbook(file_path)
-        po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
-        backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
-        convert_xls_data(file_path, backup_file)
+        elif file_path.endswith('.xls'):
+            po_number = extract_po_number(file_path, is_xlsx=False)
+            backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
+            convert_xls_data(file_path, backup_file)
+
+    except Exception as e:
+        print(f"Error in process_TSC: {str(e)}")

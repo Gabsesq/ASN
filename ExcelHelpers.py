@@ -37,28 +37,23 @@ def extract_po_number(file_path, is_xlsx=True):
         xls_book = xlrd.open_workbook(file_path)
         return xls_book.sheet_by_index(0).cell_value(3, 2)
     
-#helper loop down function
-def copy_values(xls_sheet, source_ws, start_row, start_col, dest_col, dest_start_row, column_length):
+def manyToMany(xls_sheet, source_ws, start_row, start_col, dest_col, dest_start_row, column_length):
     """
-    Copies values from the upload sheet to the destination sheet.
-    
-    Parameters:
-        xls_sheet (object): The upload Excel sheet object.
-        source_ws (object): The destination workbook sheet object.
-        start_row (int): The starting row of the data in the upload sheet.
-        start_col (int): The column index of the data in the upload sheet.
-        dest_col (str): The destination column letter in the new file.
-        dest_start_row (int): The starting row in the destination sheet.
-        column_length (int): The length of rows to copy.
+    Copies values from the source sheet to the destination sheet, row-by-row.
+    Handles cases where only a single row exists.
     """
-    for i in range(start_row, start_row + column_length):
-        value = xls_sheet.cell_value(i - 1, start_col)
-        if value:
-            source_ws[f'{dest_col}{dest_start_row + (i - start_row)}'] = value
-            print(f"Pasting {value} from ({start_col}, {i}) to {dest_col}{dest_start_row + (i - start_row)}")
-        else:
-            print(f"No value found at ({start_col}, {i})")
+    print(f"Copying from column {start_col} (starting at row {start_row}) "
+          f"to {dest_col}{dest_start_row} for {column_length} rows.")
 
+    for i in range(column_length):
+        try:
+            value = xls_sheet.cell_value(start_row + i - 1, start_col)
+            source_ws[f'{dest_col}{dest_start_row + i}'] = value
+            print(f"Pasted '{value}' to {dest_col}{dest_start_row + i}")
+        except IndexError as e:
+            print(f"IndexError at row {start_row + i - 1}, col {start_col}: {str(e)}")
+        except Exception as e:
+            print(f"Unexpected error: {str(e)}")
 # ExcelHelpers.py
 
 def oneToMany(xls_sheet, source_ws, row, col, target_column, start_row, column_length):
@@ -110,3 +105,27 @@ def typedValue(source_ws, static_value, target_column, start_row, column_length)
 
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
+
+def get_column_length(sheet, start_row):
+    """Calculate the number of non-empty rows, ensuring at least one row is processed."""
+    column_length = 0
+    while True:
+        try:
+            value = sheet.cell_value(start_row - 1, 0)  # Column A (index 0)
+            print(f"Row {start_row}: Value in A = '{value}'")
+            if value:
+                column_length += 1
+                start_row += 1
+            else:
+                break
+        except IndexError as e:
+            print(f"IndexError accessing row {start_row - 1}, column 0: {str(e)}")
+            break
+
+    # Ensure at least one row is processed, even if only one row exists
+    if column_length == 0:
+        column_length = 1
+        print("Column length adjusted to 1 to handle single-row data.")
+
+    print(f"Final Column Length: {column_length}")
+    return column_length

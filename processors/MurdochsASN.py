@@ -3,7 +3,7 @@ import xlrd
 import datetime
 import os
 from ExcelHelpers import (
-    format_cells_as_text, align_cells_left, copy_values, oneToMany, typedValue
+    format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
 
 # Define source files and destination copies for Chewy
@@ -104,13 +104,13 @@ def convert_xls_data(uploaded_file, dest_file):
         # Use helper function safely with boundary checks
         try:
             if column_length > 0:
-                copy_values(xls_sheet, source_ws, 23, 0, 'A', 19, column_length)  # A23 to A19       Item number
-                copy_values(xls_sheet, source_ws, 23, 5, 'F', 19, column_length)  # F23 to F19       UPC
-                copy_values(xls_sheet, source_ws, 23, 8, 'G', 19, column_length)  # I23 to G19       SKU
-                copy_values(xls_sheet, source_ws, 23, 6, 'H', 19, column_length)  # G23 to H19       Vendor Part
-                copy_values(xls_sheet, source_ws, 23, 1, 'I', 19, column_length)  # B23 to I19       QTY
-                copy_values(xls_sheet, source_ws, 23, 2, 'J', 19, column_length)  # C23 to J19       Unit of Measure
-                copy_values(xls_sheet, source_ws, 23, 4, 'K', 19, column_length)  # E23 to K19 I 23  Description
+                manyToMany(xls_sheet, source_ws, 23, 0, 'A', 19, column_length)  # A23 to A19       Item number
+                manyToMany(xls_sheet, source_ws, 23, 5, 'F', 19, column_length)  # F23 to F19       UPC
+                manyToMany(xls_sheet, source_ws, 23, 8, 'G', 19, column_length)  # I23 to G19       SKU
+                manyToMany(xls_sheet, source_ws, 23, 6, 'H', 19, column_length)  # G23 to H19       Vendor Part
+                manyToMany(xls_sheet, source_ws, 23, 1, 'I', 19, column_length)  # B23 to I19       QTY
+                manyToMany(xls_sheet, source_ws, 23, 2, 'J', 19, column_length)  # C23 to J19       Unit of Measure
+                manyToMany(xls_sheet, source_ws, 23, 4, 'K', 19, column_length)  # E23 to K19 I 23  Description
             else:
                 print("No data found in column A starting from row 23.")
         except Exception as e:
