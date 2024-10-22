@@ -2,8 +2,7 @@ from openpyxl import load_workbook
 import xlrd
 import datetime
 from ExcelHelpers import (
-    oneToMany, typedValue, manyToMany, get_current_date, 
-    create_folder, extract_po_number, format_cells_as_text, align_cells_left, get_column_length
+    oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length
 )
 
 # Define source file for TSC
