@@ -125,33 +125,90 @@ def get_column_length(sheet, start_row):
     print(f"Final Column Length: {column_length}")
     return column_length
 
-def insert_blank_rows_by_quantity(sheet, start_row, qty_column):
+
+
+def QTY_total(sheet, start_row, qty_column):
     """
-    Inserts blank rows based on the quantity value in the specified column.
+    Calculate the total quantity starting from a specific row and column.
 
     Parameters:
-        sheet: The upload sheet object (e.g., xlrd sheet).
-        start_row (int): The starting row to read data.
-        qty_column (int): The zero-based index of the column containing the quantity.
-    
+        sheet: The Excel sheet object (can be openpyxl or xlrd sheet).
+        start_row (int): The row to start processing (1-based index).
+        qty_column (int): The column containing quantity values (0-based index).
+
     Returns:
-        list: A list of tuples representing rows with the number of blank lines to insert.
+        int: Total quantity sum.
     """
-    rows_with_blanks = []  # Store (row, blanks) tuples
+    total_quantity = 0  # Initialize the total quantity
+
+    print(f"Calculating quantity total starting from row {start_row}, column {qty_column}...")
 
     row = start_row
     while True:
         try:
-            qty_value = sheet.cell_value(row - 1, qty_column)  # Read quantity value
-            print(f"Row {row}: Raw Quantity Value = '{qty_value}'")
+            # Read the value from the sheet
+            value = sheet.cell_value(row - 1, qty_column)  # Adjust to 0-based index
+            print(f"Row {row}: Raw Quantity Value = '{value}'")
 
-            # Ensure the quantity is processed correctly as an integer
-            qty = int(float(qty_value)) if qty_value else 1
+            # Convert to integer (if numeric) and add to the total
+            if isinstance(value, str) and value.strip().isdigit():
+                value = int(value)
+            elif isinstance(value, float):
+                value = int(value)
 
-            if qty > 1:
-                blanks_to_insert = qty - 1
-                rows_with_blanks.append((row, blanks_to_insert))
-                print(f"Inserting {blanks_to_insert} blank rows after row {row}")
+            if isinstance(value, int):
+                total_quantity += value
+                print(f"Added {value} to total. Current Total: {total_quantity}")
+            else:
+                print(f"Skipping non-numeric value at row {row}: '{value}'")
+
+            row += 1  # Move to the next row
+
+        except IndexError:
+            print(f"Reached the end of the data at row {row}.")
+            break
+        except ValueError as e:
+            print(f"ValueError at row {row}: {str(e)}")
+            break
+
+    print(f"Final Quantity Total: {total_quantity}")
+    return total_quantity
+
+
+def generate_rows(sheet, start_row, qty_column, column_count):
+    """
+    Generate rows based on the quantity value in a specified column.
+    Each duplicated row will maintain the same content but with unique line numbers.
+
+    Parameters:
+        sheet: The Excel sheet object (can be openpyxl or xlrd sheet).
+        start_row (int): The row to start reading from (1-based index).
+        qty_column (int): The column containing quantity values (0-based index).
+        column_count (int): The number of columns to copy for each row.
+
+    Returns:
+        list: A list of rows where each row is a list of cell values, 
+              with the first column representing the correct line number.
+    """
+    generated_rows = []  # Store generated rows with correct line numbering
+    line_number = 1  # Start the line number from 1
+
+    row = start_row
+    while True:
+        try:
+            # Read the quantity value from the specified column
+            qty_value = sheet.cell_value(row - 1, qty_column)
+            qty = int(float(qty_value)) if qty_value else 1  # Handle empty or non-numeric values
+
+            # Extract the row data starting from column 0 to `column_count`
+            row_data = [sheet.cell_value(row - 1, col) for col in range(column_count)]
+
+            # Duplicate the row based on the quantity value
+            for _ in range(qty):
+                # Add the current line number as the first element in the row
+                generated_rows.append([line_number] + row_data)
+                print(f"Generated row: {generated_rows[-1]}")
+                line_number += 1  # Increment line number for each new row
 
             row += 1  # Move to the next row
 
@@ -162,4 +219,4 @@ def insert_blank_rows_by_quantity(sheet, start_row, qty_column):
             print(f"ValueError at row {row}: {e}")
             break
 
-    return rows_with_blanks
+    return generated_rows

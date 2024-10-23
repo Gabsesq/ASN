@@ -3,7 +3,7 @@ import xlrd
 import datetime
 import os
 from ExcelHelpers import (
-    format_cells_as_text, align_cells_left, manyToMany, oneToMany, insert_blank_rows_by_quantity
+    format_cells_as_text, align_cells_left, manyToMany, oneToMany
 )
 
 # Define source files and destination copies for Chewy
@@ -163,15 +163,6 @@ def convert_xls_data(uploaded_file, dest_file):
             print("Pasting 'mixed' into F14, G14, H14, I14, J14, K14")
             print("Pasting 1 into L14 and M14")
 
-    # Insert blank rows based on quantity
-    rows_with_blanks = insert_blank_rows_by_quantity(xls_sheet, start_row=21, qty_column=1)
-
-    # Apply the blank row insertion to the destination worksheet
-    for row, blanks in rows_with_blanks:
-        dest_row = row + 13  # Adjust row number to match your destination worksheet layout
-        for _ in range(blanks):
-            source_ws.insert_rows(dest_row)
-            print(f"Inserted blank row at {dest_row}")
 
     format_cells_as_text(source_ws)
     align_cells_left(source_ws)

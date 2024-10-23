@@ -6,6 +6,7 @@ from processors.TSC import process_TSC
 from processors.PetSupermarketASN import process_PetSuperASN
 from processors.PetSupermarketLabel import process_PetSuperLabel
 from processors.ThriveASN import process_ThriveASN
+from processors.ThriveLabel import process_ThriveLabel
 from processors.MurdochsASN import process_MurdochsASN
 from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
@@ -63,6 +64,7 @@ def upload_file():
                 processed_files.append(file.filename)  # Append the processed file to list
             elif company == 'Thrive':
                 process_ThriveASN(file_path)
+                process_ThriveLabel(file_path)
                 processed_files.append(file.filename)  # Append the processed file to list
             elif company == 'Murdochs':
                 process_MurdochsASN(file_path)
