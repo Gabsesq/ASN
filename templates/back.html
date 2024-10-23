@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +12,7 @@
         .file-list {
             margin-top: 20px;
         }
+
         .file-item {
             margin-bottom: 10px;
             padding: 10px;
@@ -20,6 +20,7 @@
             background-color: #f9f9f9;
             cursor: move;
         }
+
         .drag-area {
             border: 2px dashed #ccc;
             padding: 20px;
@@ -28,20 +29,27 @@
         }
     </style>
 </head>
+
 <body>
     <h1>{{ message }}</h1>
 
     <!-- Display the list of processed files -->
     <div class="file-list">
         <h3>Processed Files:</h3>
-        {% for file in files %}
-        <div class="file-item" draggable="true" id="{{ file }}">
-            <a href="{{ url_for('finished_file', filename=file) }}" download="{{ file }}">{{ file }}</a>
-        </div>
-        {% endfor %}
+        {% if files %}
+            {% for file in files %}
+                <div class="file-item" draggable="true" id="{{ file }}">
+                    <!-- Pass both company and filename to the URL -->
+                    <a href="{{ url_for('finished_file', company=company, filename=file) }}" download="{{ file }}">
+                        {{ file }}
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No processed files found.</p>
+        {% endif %}
     </div>
-
- 
+    
 
     <script>
         // Handle drag and drop events
@@ -49,7 +57,7 @@
         const dropArea = document.getElementById('drop-area');
 
         // Prevent default drag behaviors
-        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropArea.addEventListener(eventName, preventDefaults, false);
         });
 
@@ -59,11 +67,11 @@
         }
 
         // Highlight drop area when file is dragged over
-        ;['dragenter', 'dragover'].forEach(eventName => {
+        ['dragenter', 'dragover'].forEach(eventName => {
             dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
         });
 
-        ;['dragleave', 'drop'].forEach(eventName => {
+        ['dragleave', 'drop'].forEach(eventName => {
             dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
         });
 
