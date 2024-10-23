@@ -3,11 +3,11 @@ import xlrd
 import datetime
 import os
 from ExcelHelpers import (
-    format_cells_as_text, align_cells_left
+    format_cells_as_text, align_cells_left, manyToMany, oneToMany, insert_blank_rows_by_quantity
 )
 
 # Define source files and destination copies for Chewy
-source_label_xlsx = "assets\Chewy\Chewy UCC128 Label Request - Copy.xlsx"
+source_label_xlsx = "assets/Chewy/Chewy UCC128 Label Request - Copy.xlsx"
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -61,6 +61,7 @@ def convert_xls_data(uploaded_file, dest_file):
     row = 21
     column_length = 0
 
+
    # Calculate column length (assumes non-empty column B values starting from row 21)
     while True:
         try:
@@ -113,59 +114,15 @@ def convert_xls_data(uploaded_file, dest_file):
 
         print(f"Length of Column A: {column_length}")  # Debugging print for column length
 
-        # Now copy from upload file column H (starting at H21) down to F14 in the copy file
-        for i in range(21, 21 + column_length):  # Loop through rows in column H in the upload file
-            value_from_H = xls_sheet.cell_value(i - 1, 7)  # H21 is (row 20, col 7) in zero-based indexing
-            source_ws[f'F{i - 7}'] = value_from_H  # Paste into F14 and down
-            print(f"Pasting {value_from_H} from H{i} to F{i - 7}")  # Debugging print
-
-        # Now copy value from C4 into A column (starting at A14 and down for column_length rows)
-        value_from_upload_C4 = xls_sheet.cell_value(3, 2)  # C4 is (row 3, column 2) in zero-based indexing
-        if value_from_upload_C4 is not None:
-            for i in range(14, 14 + column_length):  # Copy value to A14 and down for column_length rows
-                source_ws[f'A{i}'] = value_from_upload_C4
-                print(f"Pasting {value_from_upload_C4} into A{i}")  # Debugging print
-        else:
-            print("No value found in C4 or unable to read the value.")  # Debugging if C4 is None
-
-        # Now copy value from L16 into B14
-        ZipCode = xls_sheet.cell_value(15, 11)  # L16 is (row 15, column 11) in zero-based indexing
-        if ZipCode is not None:
-            for i in range(14, 14 + column_length):  # Copy value to B14 and down for column_length rows
-                source_ws[f'B{i}'] = ZipCode
-                print(f"Pasting {ZipCode} into B{i}")  # Debugging print
-        else:
-            print("No value found in L16 or unable to read the value.")  # Debugging if L16 is None
-
-        # Now copy from upload file column G (starting at G21) down to G14 in the copy file
-        for i in range(21, 21 + column_length):  # Loop through rows in column G in the upload file
-            value_from_G = xls_sheet.cell_value(i - 1, 6)  # G21 is (row 20, col 6) in zero-based indexing
-            source_ws[f'G{i - 7}'] = value_from_G  # Paste into G14 and down
-            print(f"Pasting {value_from_G} from G{i} to G{i - 7}")  # Debugging print
-
-
-        # Now copy from upload file column I (starting at I21) down to H14 in the copy file
-        for i in range(21, 21 + column_length):  # Loop through rows in column I in the upload file
-            value_from_I = xls_sheet.cell_value(i - 1, 8)  # I21 is (row 20, col 8) in zero-based indexing
-            source_ws[f'H{i - 7}'] = value_from_I  # Paste into H14 and down
-            print(f"Pasting {value_from_I} from I{i} to H{i - 7}")  # Debugging print
-
-    
-        # Now copy from upload file column B (starting at B21) down to L14 and M14 in the copy file
-        for i in range(21, 21 + column_length):  # Loop through rows in column B in the upload file
-            value_from_B = xls_sheet.cell_value(i - 1, 1)  # B21 is (row 20, col 1) in zero-based indexing
-
-            # Paste value into columns L and M in the label file
-            source_ws[f'L{i - 7}'] = value_from_B  # Paste into L14 and down
-            source_ws[f'M{i - 7}'] = value_from_B  # Also paste into M14 and down
-            print(f"Pasting {value_from_B} from B{i} to L{i - 7} and M{i - 7}")  # Debugging print
-
-        # Now copy from upload file column E (starting at E21) down to I14 in the copy file
-        for i in range(21, 21 + column_length):  # Loop through rows in column E in the upload file
-            value_from_E = xls_sheet.cell_value(i - 1, 4)  # E21 is (row 20, col 4) in zero-based indexing
-            source_ws[f'I{i - 7}'] = value_from_E  # Paste into I14 and down
-            print(f"Pasting {value_from_E} from E{i} to I{i - 7}")  # Debugging print
-
+ 
+        manyToMany(xls_sheet, source_ws, 21, 7, 'F', 14, column_length)
+        oneToMany(xls_sheet, source_ws, 3, 2, 'A', 14, column_length) # PO
+        oneToMany(xls_sheet, source_ws, 15, 11, 'B', 14, column_length) #Zip code
+        manyToMany(xls_sheet, source_ws, 21, 6, 'G', 14, column_length)
+        manyToMany(xls_sheet, source_ws, 21, 8, 'H', 14, column_length) #SKU
+        manyToMany(xls_sheet, source_ws, 21, 1, 'L', 14, column_length) #QTY
+        manyToMany(xls_sheet, source_ws, 21, 1, 'M', 14, column_length) #Label #
+        manyToMany(xls_sheet, source_ws, 21, 4, 'I', 14, column_length)
 
 
         # Now copy "mixed" into J14 and K14 down for the length of other items
@@ -206,6 +163,18 @@ def convert_xls_data(uploaded_file, dest_file):
             print("Pasting 'mixed' into F14, G14, H14, I14, J14, K14")
             print("Pasting 1 into L14 and M14")
 
+    # Insert blank rows based on quantity
+    rows_with_blanks = insert_blank_rows_by_quantity(xls_sheet, start_row=21, qty_column=1)
+
+    # Apply the blank row insertion to the destination worksheet
+    for row, blanks in rows_with_blanks:
+        dest_row = row + 13  # Adjust row number to match your destination worksheet layout
+        for _ in range(blanks):
+            source_ws.insert_rows(dest_row)
+            print(f"Inserted blank row at {dest_row}")
+
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
 
     # Save the updated copy
     source_wb.save(dest_file)

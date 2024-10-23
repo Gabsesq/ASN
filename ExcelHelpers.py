@@ -124,3 +124,42 @@ def get_column_length(sheet, start_row):
 
     print(f"Final Column Length: {column_length}")
     return column_length
+
+def insert_blank_rows_by_quantity(sheet, start_row, qty_column):
+    """
+    Inserts blank rows based on the quantity value in the specified column.
+
+    Parameters:
+        sheet: The upload sheet object (e.g., xlrd sheet).
+        start_row (int): The starting row to read data.
+        qty_column (int): The zero-based index of the column containing the quantity.
+    
+    Returns:
+        list: A list of tuples representing rows with the number of blank lines to insert.
+    """
+    rows_with_blanks = []  # Store (row, blanks) tuples
+
+    row = start_row
+    while True:
+        try:
+            qty_value = sheet.cell_value(row - 1, qty_column)  # Read quantity value
+            print(f"Row {row}: Raw Quantity Value = '{qty_value}'")
+
+            # Ensure the quantity is processed correctly as an integer
+            qty = int(float(qty_value)) if qty_value else 1
+
+            if qty > 1:
+                blanks_to_insert = qty - 1
+                rows_with_blanks.append((row, blanks_to_insert))
+                print(f"Inserting {blanks_to_insert} blank rows after row {row}")
+
+            row += 1  # Move to the next row
+
+        except IndexError:
+            print(f"Reached the end of the sheet at row {row}.")
+            break
+        except ValueError as e:
+            print(f"ValueError at row {row}: {e}")
+            break
+
+    return rows_with_blanks
