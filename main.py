@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, send_from_directory
 import os
+import openpyxl
 from processors.Chewy import process_chewy
 from processors.ChewyLabel import process_label
 from processors.TSC import process_TSC
@@ -103,5 +104,5 @@ def finished_file(company, filename):
         print(f"Error serving file: {str(e)}")
         return f"Error serving file: {str(e)}", 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Entry point for Vercel
+vc__handler__python = app
