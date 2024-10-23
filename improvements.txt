@@ -2,3 +2,10 @@ UI
 TSC - ask for Shipping # beforehand
 Chewy - ask for Bill of Lading
 Chewy - mixed labels, may use OPENAI? Or think out some kind of search and organize
+Calandar that can track when each ASN is done? Definitely back log
+Make sure quantities (Palett vs Carton) are air tight
+host this site
+Think about asking for some info before processing.
+    - This may entail splitting Labels and ASNs
+Saving and deleting files?
+Printing out files for user?
