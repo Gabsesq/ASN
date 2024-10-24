@@ -81,7 +81,7 @@ def convert_xls_data(uploaded_file, dest_file):
         manyToMany(xls_sheet, source_ws, 18, 0, 'A', 17, column_length)  # Item No
         oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length)    # Copy 'C4' to 'B17'
         manyToMany(xls_sheet, source_ws, 18, 4, 'D', 17, column_length)  # UPS
-        manyToMany(xls_sheet, source_ws, 18, 7, 'E', 17, column_length)  # Buyer Part
+        manyToMany(xls_sheet, source_ws, 18, 5, 'E', 17, column_length)  # Buyer Part
         manyToMany(xls_sheet, source_ws, 18, 6, 'F', 17, column_length)  # Vendor Part
         manyToMany(xls_sheet, source_ws, 18, 1, 'G', 17, column_length)  # QTY
         manyToMany(xls_sheet, source_ws, 18, 2, 'H', 17, column_length)  # UOM
