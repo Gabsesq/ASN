@@ -1,8 +1,10 @@
 from flask import Flask, request, render_template, send_from_directory
 import os
 import sys
+
 # Add the parent directory (root of the project) to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from processors.Chewy import process_chewy
 from processors.ChewyLabel import process_label
 from processors.TSC import process_TSC
@@ -16,12 +18,9 @@ from processors.ScheelsASN import process_ScheelsASN
 
 app = Flask(__name__, template_folder="../templates")
 
-UPLOAD_FOLDER = 'uploads'
 FINISHED_FOLDER = 'Finished'  # Assuming processed files go into a subfolder of Finished
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
+# Ensure the Finished folder exists
 if not os.path.exists(FINISHED_FOLDER):
     os.makedirs(FINISHED_FOLDER)
 
@@ -41,8 +40,12 @@ def upload_file():
         return render_template('back.html', message='No selected file'), 400
 
     if file:
-        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(file_path)
+        # Save the file to Vercel's writable /tmp directory
+        tmp_path = os.path.join('/tmp', file.filename)
+        try:
+            file.save(tmp_path)  # Save the uploaded file to /tmp
+        except Exception as e:
+            return render_template('back.html', message=f'Error saving file: {str(e)}'), 500
 
         try:
             # Determine the output folder based on the company
@@ -52,21 +55,21 @@ def upload_file():
 
             # Process the file based on the selected company
             if company == 'chewy':
-                process_chewy(file_path)
-                process_label(file_path)
+                process_chewy(tmp_path)
+                process_label(tmp_path)
             elif company == 'TSC':
-                process_TSC(file_path)
+                process_TSC(tmp_path)
             elif company == 'PetSupermarket':
-                process_PetSuperLabel(file_path)
-                process_PetSuperASN(file_path)
+                process_PetSuperLabel(tmp_path)
+                process_PetSuperASN(tmp_path)
             elif company == 'Thrive':
-                process_ThriveASN(file_path)
-                process_ThriveLabel(file_path)
+                process_ThriveASN(tmp_path)
+                process_ThriveLabel(tmp_path)
             elif company == 'Murdochs':
-                process_MurdochsASN(file_path)
-                process_MurdochsLabel(file_path)
+                process_MurdochsASN(tmp_path)
+                process_MurdochsLabel(tmp_path)
             elif company == 'Scheels':
-                process_ScheelsASN(file_path)
+                process_ScheelsASN(tmp_path)
 
             # Collect all processed files from the output folder
             processed_files = [
@@ -87,6 +90,8 @@ def upload_file():
         except Exception as e:
             print(f"Error: {e}")
             return render_template('back.html', message=f'Error processing file: {str(e)}'), 500
+
+    return render_template('back.html', message='File upload failed'), 500
 
 
 @app.route('/finished/<company>/<filename>')
