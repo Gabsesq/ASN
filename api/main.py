@@ -1,5 +1,8 @@
 from flask import Flask, request, render_template, send_from_directory
 import os
+import sys
+# Add the parent directory (root of the project) to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from processors.Chewy import process_chewy
 from processors.ChewyLabel import process_label
 from processors.TSC import process_TSC
@@ -11,7 +14,7 @@ from processors.MurdochsASN import process_MurdochsASN
 from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates")
 
 UPLOAD_FOLDER = 'uploads'
 FINISHED_FOLDER = 'Finished'  # Assuming processed files go into a subfolder of Finished
