@@ -2,9 +2,12 @@ import os
 import datetime
 from openpyxl import load_workbook
 import xlrd
+from ExcelHelpers import (
+    format_cells_as_text, align_cells_left
+)
 
 # Define source files and destination copies for Pet Supermarket
-source_label_xlsx = "assets/Pet Supermarket/Blank Pet Supermarket UCC 128 Label Request.xlsx"
+source_label_xlsx = "assets\Pet Supermarket\Blank Pet Supermarket UCC 128 Label Request.xlsx"
 
 # Function to copy data from uploaded .xlsx file to specific cells in the label request .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -29,6 +32,7 @@ def copy_xlsx_data(uploaded_file, dest_file):
     source_ws['G14'] = "mixed"
     source_ws['H14'] = 1
 
+    align_cells_left(source_ws)
     # Save the updated copy
     source_wb.save(dest_file)
 
@@ -38,6 +42,7 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_label_xlsx)
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
+    align_cells_left(source_ws)
 
     # Mapping uploaded cells to copy cells
     data_map = {
@@ -56,6 +61,7 @@ def convert_xls_data(uploaded_file, dest_file):
     source_ws['G14'] = "mixed"
     source_ws['H14'] = 1
 
+    align_cells_left(source_ws)
     # Save the updated copy
     source_wb.save(dest_file)
 

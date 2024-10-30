@@ -58,11 +58,8 @@ def upload_file():
                 process_PetSuperASN(file_path)
             elif company == 'Thrive':
                 process_ThriveASN(file_path)
-<<<<<<< HEAD
                 process_ThriveLabel(file_path)
                 processed_files.append(file.filename)  # Append the processed file to list
-=======
->>>>>>> a9e0a1ccbff6a9b03979a38196e158a967fa6e74
             elif company == 'Murdochs':
                 process_MurdochsASN(file_path)
                 process_MurdochsLabel(file_path)
