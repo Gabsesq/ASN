@@ -1,0 +1,48 @@
+# main.spec
+block_cipher = None
+
+a = Analysis(
+    ['main.py'],
+    pathex=['.'],
+    binaries=[],
+    datas=[
+        ('templates', 'templates'),  # Add entire templates directory
+        ('static', 'static'),
+        ('assets/Chewy', 'assets/Chewy'),
+        ('assets/Murdochs', 'assets/Murdochs'),
+        ('assets/Pet Supermarket', 'assets/Pet Supermarket'),
+        ('assets/Scheels', 'assets/Scheels'),
+        ('assets/Thrive Market', 'assets/Thrive Market'),
+        ('assets/TSC', 'assets/TSC'),
+        ('assets/TSC IS', 'assets/TSC IS'),
+        ('Finished/Chewy', 'Finished/Chewy'),
+        ('Finished/Murdochs', 'Finished/Murdochs'),
+        ('Finished/PetSupermarket', 'Finished/PetSupermarket'),
+        ('Finished/Thrive', 'Finished/Thrive'),
+        ('Finished/TSC', 'Finished/TSC')
+    ],
+    hiddenimports=[],
+    hookspath=[],
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='main',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=True,
+)

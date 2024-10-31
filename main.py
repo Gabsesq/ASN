@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, send_file
 import os
+import sys
 from processors.ChewyASN import process_ChewyASN
 from processors.ChewyLabel import process_ChewyLabel
 from processors.TSC import process_TSC
@@ -12,11 +13,23 @@ from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
 from processors.ScheelsLabel import process_ScheelsLabel
 
-app = Flask(__name__)
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
 
-UPLOAD_FOLDER = 'uploads'
-FINISHED_FOLDER = 'Finished'
+    return os.path.join(base_path, relative_path)
 
+# Initialize Flask with an absolute path to the templates folder
+app = Flask(__name__, template_folder=resource_path("templates"))
+
+UPLOAD_FOLDER = resource_path('uploads')
+FINISHED_FOLDER = resource_path('Finished')
+
+# Ensure necessary folders exist
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -56,6 +69,9 @@ def upload_file():
                 label_file_path = globals()[f"process_{company}Label"](file_path)
                 processed_files = [asn_file_path, label_file_path]
 
+            # Adjust paths for processed files to use resource_path
+            processed_files = [resource_path(file) for file in processed_files]
+
             # Render success page with download links for processed files
             return render_template(
                 'back.html',
@@ -71,11 +87,13 @@ def upload_file():
 @app.route('/download/<path:file_path>')
 def download_file(file_path):
     """Serve the processed file to the user."""
-    if not os.path.exists(file_path):
-        print(f"File not found: {file_path}")
+    full_file_path = resource_path(file_path)
+
+    if not os.path.exists(full_file_path):
+        print(f"File not found: {full_file_path}")
         return f"File not found", 404
 
-    return send_file(file_path, as_attachment=True)
+    return send_file(full_file_path, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
