@@ -168,3 +168,6 @@ def process_chewy(file_path):
         copy_xlsx_data(file_path, backup_file)
     elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
+
+
+    return folder_path  # Return the folder path for download

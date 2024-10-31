@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
     <title>Success</title>
     <style>
-        /* Add some basic styling */
+        /* Basic styling for file list and drag area */
         .file-list {
             margin-top: 20px;
         }
@@ -18,7 +17,7 @@
             padding: 10px;
             border: 1px solid #ccc;
             background-color: #f9f9f9;
-            cursor: move;
+            cursor: pointer;
         }
 
         .drag-area {
@@ -29,65 +28,31 @@
         }
     </style>
 </head>
-
 <body>
     <h1>{{ message }}</h1>
 
-    <!-- Display the list of processed files -->
+    <!-- Display individual files if needed (non-clickable list) -->
     <div class="file-list">
         <h3>Processed Files:</h3>
         {% if files %}
             {% for file in files %}
-                <div class="file-item" draggable="true" id="{{ file }}">
-                    <!-- Pass both company and filename to the URL -->
-                    <a href="{{ url_for('finished_file', company=company, filename=file) }}" download="{{ file }}">
-                        {{ file }}
-                    </a>
+                <div class="file-item">
+                    {{ file }}
                 </div>
             {% endfor %}
         {% else %}
             <p>No processed files found.</p>
         {% endif %}
     </div>
-    
 
-    <script>
-        // Handle drag and drop events
-        const fileItems = document.querySelectorAll('.file-item');
-        const dropArea = document.getElementById('drop-area');
-
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        // Highlight drop area when file is dragged over
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
-        });
-
-        // Handle drop event in the drop area
-        dropArea.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        });
-
-        // Function to handle dropped files
-        function handleFiles(files) {
-            [...files].forEach(file => {
-                console.log('Dropped file:', file);
-            });
-        }
-    </script>
+    <!-- Download link for ZIP file containing all processed files in the PO folder -->
+    {% if zip_filename %}
+    <div class="drag-area">
+        <h3>Download All Files</h3>
+            <a href="{{ url_for('download_folder', company=company, po_number=po_number, zip_filename=zip_filename) }}" class="button-8">
+                Download ZIP ({{ zip_filename }})
+            </a>
+    </div>
+{% endif %}
 </body>
 </html>

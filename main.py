@@ -1,5 +1,6 @@
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, render_template, send_file, send_from_directory
 import os
+import zipfile
 from processors.Chewy import process_chewy
 from processors.ChewyLabel import process_label
 from processors.TSC import process_TSC
@@ -14,13 +15,25 @@ from processors.ScheelsASN import process_ScheelsASN
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'uploads'
-FINISHED_FOLDER = 'Finished'  # Assuming processed files go into a subfolder of Finished
+FINISHED_FOLDER = 'Finished'
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 if not os.path.exists(FINISHED_FOLDER):
     os.makedirs(FINISHED_FOLDER)
+
+def zip_folder(folder_path):
+    """Create a ZIP file of the given folder."""
+    zip_filename = os.path.basename(folder_path) + ".zip"  # Name the ZIP file after the PO number
+    zip_path = os.path.join(folder_path, zip_filename)  # Save ZIP inside the PO folder
+
+    with zipfile.ZipFile(zip_path, 'w') as zipf:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                zipf.write(os.path.join(root, file), 
+                           os.path.relpath(os.path.join(root, file), folder_path))
+    return zip_path  # Return full path to the ZIP file
 
 @app.route('/')
 def upload_form():
@@ -42,68 +55,55 @@ def upload_file():
         file.save(file_path)
 
         try:
-            # Determine the output folder based on the company
-            output_folder = os.path.join(FINISHED_FOLDER, company)
-            if not os.path.exists(output_folder):
-                os.makedirs(output_folder)
-
             # Process the file based on the selected company
             if company == 'chewy':
-                process_chewy(file_path)
+                folder_path = process_chewy(file_path)  # Function should return the folder path
                 process_label(file_path)
             elif company == 'TSC':
-                process_TSC(file_path)
+                folder_path = process_TSC(file_path)
             elif company == 'PetSupermarket':
+                folder_path = process_PetSuperASN(file_path)
                 process_PetSuperLabel(file_path)
-                process_PetSuperASN(file_path)
             elif company == 'Thrive':
-                process_ThriveASN(file_path)
+                folder_path = process_ThriveASN(file_path)
                 process_ThriveLabel(file_path)
             elif company == 'Murdochs':
-                process_MurdochsASN(file_path)
+                folder_path = process_MurdochsASN(file_path)
                 process_MurdochsLabel(file_path)
             elif company == 'Scheels':
-                process_ScheelsASN(file_path)
+                folder_path = process_ScheelsASN(file_path)
 
-            # Collect all processed files from the output folder
-            processed_files = [
-                filename for filename in os.listdir(output_folder) if filename.endswith('.xlsx')
-            ]
+            # Zip the PO folder and get its path
+            zip_path = zip_folder(folder_path)
+            zip_filename = os.path.basename(zip_path)  # Extract the ZIP filename
 
-            if not processed_files:
-                return render_template('back.html', message='No processed files found.', files=[])
-
-            # Render the success page with the list of processed files and company
+            # Render success page with download link to the ZIP file
             return render_template(
                 'back.html',
-                message='File processed successfully!',
-                files=processed_files,
-                company=company
+                message='Files processed successfully!',
+                zip_filename=zip_filename,
+                company=company,
+                po_number=os.path.basename(folder_path),  # Pass PO number
+                files=os.listdir(folder_path)  # List files in the folder
             )
 
         except Exception as e:
             print(f"Error: {e}")
             return render_template('back.html', message=f'Error processing file: {str(e)}'), 500
 
+@app.route('/download/<company>/<po_number>/<zip_filename>')
+def download_folder(company, po_number, zip_filename):
+    """Serve the zipped folder to the user."""
+    # Correct path: Start from the `Finished` folder
+    zip_path = os.path.join(FINISHED_FOLDER, company, po_number, zip_filename)
+    
+    if not os.path.exists(zip_path):
+        print(f"File not found: {zip_path}")
+        return f"File {zip_filename} not found", 404
 
-@app.route('/finished/<company>/<filename>')
-def finished_file(company, filename):
-    """Serve the processed file to the user."""
-    try:
-        output_folder = os.path.join(FINISHED_FOLDER, company)
-        file_path = os.path.join(output_folder, filename)
+    return send_file(zip_path, as_attachment=True)
 
-        # Debugging: Check if the file exists
-        if not os.path.exists(file_path):
-            print(f"File not found: {file_path}")
-            return f"File {filename} not found", 404
 
-        print(f"Serving file: {file_path}")
-        return send_from_directory(output_folder, filename, as_attachment=True)
-
-    except Exception as e:
-        print(f"Error serving file: {str(e)}")
-        return f"Error serving file: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
