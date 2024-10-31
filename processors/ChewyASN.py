@@ -144,7 +144,7 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb.save(dest_file)
 
 # Main function to process Chewy files
-def process_chewy(file_path):
+def process_ChewyASN(file_path):
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
 
     # Determine if the file is XLSX or XLS
@@ -156,12 +156,8 @@ def process_chewy(file_path):
         xls_book = xlrd.open_workbook(file_path)
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
 
-    # Create the folder path using the PO number
-    folder_path = f"Finished/Chewy/{po_number}"
-    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
-
     # Define the backup file path
-    backup_file = f"{folder_path}/Chewy 856 ASN PO {po_number} {current_date}.xlsx"
+    backup_file = f"Finished/Chewy 856 ASN PO {po_number} {current_date}.xlsx"
 
     # Perform the copy or conversion based on file type
     if file_path.endswith('.xlsx'):
@@ -170,4 +166,4 @@ def process_chewy(file_path):
         convert_xls_data(file_path, backup_file)
 
 
-    return folder_path  # Return the folder path for download
+    return backup_file  # Return the folder path for download

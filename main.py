@@ -1,17 +1,16 @@
 from flask import Flask, request, render_template, send_file
 import os
-from processors.Chewy import process_chewy
-from processors.ChewyLabel import process_label
+from processors.ChewyASN import process_ChewyASN
+from processors.ChewyLabel import process_ChewyLabel
 from processors.TSC import process_TSC
-from processors.PetSupermarketASN import process_PetSuperASN
-from processors.PetSupermarketLabel import process_PetSuperLabel
+from processors.PetSupermarketASN import process_PetSupermarketASN
+from processors.PetSupermarketLabel import process_PetSupermarketLabel
 from processors.ThriveASN import process_ThriveASN
 from processors.ThriveLabel import process_ThriveLabel
 from processors.MurdochsASN import process_MurdochsASN
 from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
-
-print("Current Working Directory:", os.getcwd())
+from processors.ScheelsLabel import process_ScheelsLabel
 
 app = Flask(__name__)
 
@@ -44,32 +43,24 @@ def upload_file():
         file.save(file_path)
 
         try:
-            # Process the file based on the selected company
-            if company == 'chewy':
-                processed_file_path = process_chewy(file_path)
-                process_label(file_path)  # Ensure both files get processed if needed
-            elif company == 'TSC':
-                processed_file_path = process_TSC(file_path)
-            elif company == 'PetSupermarket':
-                processed_file_path = process_PetSuperASN(file_path)
-                process_PetSuperLabel(file_path)
-            elif company == 'Thrive':
-                processed_file_path = process_ThriveASN(file_path)
-                process_ThriveLabel(file_path)
-            elif company == 'Murdochs':
-                processed_file_path = process_MurdochsASN(file_path)
-                process_MurdochsLabel(file_path)
-            elif company == 'Scheels':
-                processed_file_path = process_ScheelsASN(file_path)
-            else:
-                return render_template('back.html', message='Invalid company selected'), 400
+            processed_files = []  # Initialize an empty list for file paths
 
-            # Render success page with a download link for the processed file
-            processed_filename = os.path.basename(processed_file_path)
+            # Process files based on the company
+            if company == 'TSC':
+                # Only process one file for TSC
+                processed_file_path = process_TSC(file_path)
+                processed_files = [processed_file_path]  # Single file for TSC
+            else:
+                # Process two files for all other companies
+                asn_file_path = globals()[f"process_{company}ASN"](file_path)
+                label_file_path = globals()[f"process_{company}Label"](file_path)
+                processed_files = [asn_file_path, label_file_path]
+
+            # Render success page with download links for processed files
             return render_template(
                 'back.html',
                 message='File processed successfully!',
-                processed_filename=processed_filename,
+                processed_files=processed_files,
                 company=company
             )
 
@@ -77,15 +68,12 @@ def upload_file():
             print(f"Error: {e}")
             return render_template('back.html', message=f'Error processing file: {str(e)}'), 500
 
-@app.route('/download/<company>/<processed_filename>')
-def download_file(company, processed_filename):
+@app.route('/download/<path:file_path>')
+def download_file(file_path):
     """Serve the processed file to the user."""
-    # Construct the path for the processed file in the Finished folder
-    file_path = os.path.join(FINISHED_FOLDER, company, processed_filename)
-
     if not os.path.exists(file_path):
         print(f"File not found: {file_path}")
-        return f"File {processed_filename} not found", 404
+        return f"File not found", 404
 
     return send_file(file_path, as_attachment=True)
 

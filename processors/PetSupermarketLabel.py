@@ -60,7 +60,7 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb.save(dest_file)
 
 # Main function to process Pet Supermarket Label files based on file type
-def process_PetSuperLabel(file_path):
+def process_PetSupermarketLabel(file_path):
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
 
     # Ensure the 'Finished/PetSupermarket' directory exists
@@ -81,3 +81,5 @@ def process_PetSuperLabel(file_path):
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
         backup_file = f"{finished_folder}/Pet Supermarket Label Request PO {po_number} {current_date}.xlsx"
         convert_xls_data(file_path, backup_file)
+
+    return backup_file

@@ -97,15 +97,14 @@ def process_ThriveASN(file_path):
     current_date = get_current_date()
     po_number = extract_po_number(file_path, file_path.endswith('.xlsx'))
 
-    # Create the output folder path
-    folder_path = f"Finished/Thrive/{po_number}"
-    create_folder(folder_path)
 
     # Define the destination backup file path
-    backup_file = f"{folder_path}/Thrive ASN PO {po_number} {current_date}.xlsx"
+    backup_file = f"Finished/Thrive/Thrive ASN PO {po_number} {current_date}.xlsx"
 
     # Process based on file type
     if file_path.endswith('.xlsx'):
         copy_xlsx_data(file_path, backup_file)
     elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
+
+    return backup_file

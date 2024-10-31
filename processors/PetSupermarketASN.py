@@ -163,7 +163,7 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb.save(dest_file)
 
 # Main function to process Pet Supermarket ASN files
-def process_PetSuperASN(file_path):
+def process_PetSupermarketASN(file_path):
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
 
     if file_path.endswith('.xlsx'):
@@ -177,3 +177,5 @@ def process_PetSuperASN(file_path):
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
         backup_file = f"Finished/PetSupermarket/Pet Supermarket ASN PO {po_number} {current_date}.xlsx"
         convert_xls_data(file_path, backup_file)
+
+    return backup_file
