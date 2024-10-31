@@ -31,7 +31,15 @@
 <body>
     <h1>{{ message }}</h1>
 
-    <!-- Display individual files if needed (non-clickable list) -->
+    <!-- Display individual processed file download link -->
+    {% if processed_filename %}
+        <p>Your file is ready for download:</p>
+        <a href="{{ url_for('download_file', company=company, processed_filename=processed_filename) }}" class="button-8">
+            Download {{ processed_filename }}
+        </a>
+    {% endif %}
+
+    <!-- Display list of processed files, if available -->
     <div class="file-list">
         <h3>Processed Files:</h3>
         {% if files %}
@@ -40,7 +48,7 @@
                     {{ file }}
                 </div>
             {% endfor %}
-        {% else %}
+        {% elif not processed_filename %}
             <p>No processed files found.</p>
         {% endif %}
     </div>
@@ -49,10 +57,10 @@
     {% if zip_filename %}
     <div class="drag-area">
         <h3>Download All Files</h3>
-            <a href="{{ url_for('download_folder', company=company, po_number=po_number, zip_filename=zip_filename) }}" class="button-8">
-                Download ZIP ({{ zip_filename }})
-            </a>
+        <a href="{{ url_for('download_folder', company=company, po_number=po_number, zip_filename=zip_filename) }}" class="button-8">
+            Download ZIP ({{ zip_filename }})
+        </a>
     </div>
-{% endif %}
+    {% endif %}
 </body>
 </html>

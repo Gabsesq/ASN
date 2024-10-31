@@ -1,5 +1,5 @@
-<h2>Upload an Excel File</h2>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='button.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
+<body>
+
+<h2>Upload an Excel File</h2>
 
 <form id="uploadForm" enctype="multipart/form-data" method="POST" action="/upload">
-    
     <select id="company" name="company" required class="select-8">
         <option value="">-- Select a Company --</option>
         <option value="chewy">Chewy</option>
@@ -31,7 +33,7 @@
 
     <button type="submit" class="button-8">Upload and Transfer Data</button>
     <div id="spinner" style="display:none;">
-        <p>Uploading...</p>
+        
     </div>
 </form>
 
@@ -42,16 +44,14 @@
         padding: 20px;
         text-align: center;
         cursor: pointer;
-        width: 100%;          /* Set a width */
-        max-width: 500px;      /* Optional: Limit the max width */
-        margin: 20px auto;     /* Center it horizontally */
-        background-color: #f9f9f9;  /* Light background for better visibility */
+        width: 100%;
+        max-width: 500px;
+        margin: 20px auto;
+        background-color: #f9f9f9;
     }
-
     #drop-area.highlight {
-        border-color: purple;  /* Highlight border when dragging over */
+        border-color: purple;
     }
-
     .button-8 {
         display: inline-block;
         padding: 10px 20px;
@@ -59,11 +59,10 @@
         color: rgb(119, 53, 75);
         border-radius: 4px;
         cursor: pointer;
-        margin-top: 10px;  /* Add some space between the drop area and the button */
+        margin-top: 10px;
     }
-
     #fileElem {
-        display: none;  /* Keep the file input hidden */
+        display: none;
     }
 </style>
 
@@ -72,15 +71,13 @@
     const companySelect = document.getElementById('company');
     const dropArea = document.getElementById('drop-area');
     const fileInput = document.getElementById('fileElem');
-    const browseButton = document.getElementById('browseButton');  // Button to trigger file dialog
+    const browseButton = document.getElementById('browseButton');
+    const uploadForm = document.getElementById('uploadForm');
+    const spinner = document.getElementById('spinner');
 
-    // Hide the drop area until a company is selected
+    // Show drop area only when a company is selected
     companySelect.addEventListener('change', function() {
-        if (this.value) {
-            dropArea.style.display = 'block';  // Show drop area when a company is selected
-        } else {
-            dropArea.style.display = 'none';  // Hide drop area when no company is selected
-        }
+        dropArea.style.display = this.value ? 'block' : 'none';
     });
 
     // Prevent default drag behaviors
@@ -109,22 +106,27 @@
         handleFiles(files);
     });
 
-    // Click event on the drop area, opening file input
+    // Trigger file input on browse button click
     browseButton.addEventListener('click', () => {
-        fileInput.click();  // Trigger the hidden file input
+        fileInput.click();
     });
 
+    // Handle file selection via file input
     fileInput.addEventListener('change', () => {
-        const files = fileInput.files;
-        if (files.length > 0) {
-            handleFiles(files);  // Process files if selected via the file input
+        if (fileInput.files.length > 0) {
+            handleFiles(fileInput.files);
         }
     });
 
-    // Attach dropped files to the file input for form submission
+    // Attach the selected file to the form for submission
     function handleFiles(files) {
         if (files.length > 0) {
-            fileInput.files = files;  // Attach files to the hidden input element
+            fileInput.files = files;
+            spinner.style.display = 'block'; // Show spinner on submit
+            uploadForm.submit(); // Auto-submit the form once a file is chosen
         }
     }
 </script>
+
+</body>
+</html>

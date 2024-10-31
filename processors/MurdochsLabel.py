@@ -158,20 +158,19 @@ def process_MurdochsLabel(file_path):
     if file_path.endswith('.xlsx'):
         uploaded_wb = load_workbook(file_path)
         po_number = uploaded_wb.active['C4'].value
-
     elif file_path.endswith('.xls'):
         xls_book = xlrd.open_workbook(file_path)
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
+    else:
+        raise ValueError("Unsupported file type. Only .xlsx and .xls are supported.")
 
-    # Create the folder path using the PO number
-    folder_path = f"Finished/Murdochs/{po_number}"
-    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
-
-    # Define the backup file path
-    backup_file = f"{folder_path}/Murdochs UCC128 Label Request {po_number} {current_date}.xlsx"
+    # Define the backup file path in `Finished/Murdochs`
+    backup_file = f"Finished/Murdochs/Murdochs UCC128 Label Request {po_number} {current_date}.xlsx"
 
     # Perform the copy or conversion based on file type
     if file_path.endswith('.xlsx'):
         copy_xlsx_data(file_path, backup_file)
     elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
+
+    return backup_file  # Return the full file path for further use or download

@@ -159,6 +159,11 @@ def process_TSC(file_path):
             po_number = extract_po_number(file_path, is_xlsx=False)
             backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
             convert_xls_data(file_path, backup_file)
+        
+        # Return backup_file path to ensure it’s accessible for further processing
+        return backup_file
 
     except Exception as e:
         print(f"Error in process_TSC: {str(e)}")
+        return None  # Ensure None is returned if an error occurs
+

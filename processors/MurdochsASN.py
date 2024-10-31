@@ -7,7 +7,7 @@ from ExcelHelpers import (
 )
 
 # Define source files and destination copies for Chewy
-source_asn_xlsx = "assets\Murdochs\Blank Murdochs 856 ASN.xlsx"
+source_asn_xlsx = "assets/Murdochs/Blank Murdochs 856 ASN.xlsx"
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -167,14 +167,10 @@ def process_MurdochsASN(file_path):
         xls_book = xlrd.open_workbook(file_path)
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
 
-    # Create the folder path using the PO number
-    folder_path = f"Finished/Murdochs/{po_number}"
-    os.makedirs(folder_path, exist_ok=True)  # Create the folder if it doesn't exist
-
     # Define the backup file path
-    backup_file = f"{folder_path}/Murdochs 856 ASN PO {po_number} {current_date}.xlsx"
+    backup_file = f"Finished/Murdochs/Murdochs 856 ASN PO {po_number} {current_date}.xlsx"
 
-    # Perform the copy or conversion based on file type
+        # Perform the copy or conversion based on file type
     if file_path.endswith('.xlsx'):
         copy_xlsx_data(file_path, backup_file)
     elif file_path.endswith('.xls'):
