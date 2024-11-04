@@ -12,32 +12,37 @@
             margin-top: 20px;
         }
 
-        .file-item {
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-            cursor: pointer;
+
+        .folder-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 2%;
+            mix-blend-mode:multiply;
         }
 
-        .drag-area {
-            border: 2px dashed #ccc;
-            padding: 20px;
-            text-align: center;
-            margin-top: 20px;
+        .file-name {
+            margin-bottom:10%
+            
         }
+        .file-item {
+        margin-bottom: 10px;
+        margin-left: 20%;
+        margin-right:20%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none; /* Removes underline from the link */
+        color: #333; /* Default link color */
+        display: block;
+    }
+
+
     </style>
 </head>
 <body>
     <h1>{{ message }}</h1>
-
-    <!-- Display individual processed file download link if there's only one -->
-    {% if processed_filename %}
-        <p>Your file is ready for download:</p>
-        <a href="{{ url_for('download_file', company=company, processed_filename=processed_filename) }}" class="button-8">
-            Download {{ processed_filename }}
-        </a>
-    {% endif %}
 
     <!-- Display multiple processed files download links, if available -->
     <div class="file-list">
@@ -45,7 +50,8 @@
         {% if processed_files %}
             {% for file_path in processed_files %}
                 <a href="{{ url_for('download_file', file_path=file_path) }}" class="file-item">
-                    Download {{ file_path.split('/')[-1] }}
+                    <img src="{{ url_for('static', filename='icon.png') }}" alt="Folder Icon" class="folder-icon">
+                    <div class="file-name">{{ file_path.split('/')[-1] }}</div>
                 </a>
             {% endfor %}
         {% elif not processed_filename %}
