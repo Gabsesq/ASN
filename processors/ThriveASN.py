@@ -2,12 +2,12 @@ from openpyxl import load_workbook
 import xlrd
 import os
 from ExcelHelpers import (
-    format_cells_as_text, align_cells_left, manyToMany, oneToMany,
+    resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany,
     typedValue, QTY_total, get_column_length, create_folder, extract_po_number, get_current_date, generate_rows
 )
 
 # Define source ASN template file path
-source_asn_xlsx = "assets/Thrive Market/Thrive Market 856 Master Template.xlsx"
+source_asn_xlsx = resource_path("assets/Thrive Market/Thrive Market 856 Master Template.xlsx")
 
 
 
@@ -97,9 +97,12 @@ def process_ThriveASN(file_path):
     current_date = get_current_date()
     po_number = extract_po_number(file_path, file_path.endswith('.xlsx'))
 
-
     # Define the destination backup file path
-    backup_file = f"Finished/Thrive/Thrive ASN PO {po_number} {current_date}.xlsx"
+    backup_file = os.path.join(FINISHED_FOLDER, f"Thrive/Thrive ASN PO {po_number} {current_date}.xlsx")
+    
+    # Ensure the Thrive folder exists in the Finished directory
+    os.makedirs(os.path.dirname(backup_file), exist_ok=True)
+    print(f"Resolved backup file path: {backup_file}")  # Debug line to confirm path
 
     # Process based on file type
     if file_path.endswith('.xlsx'):

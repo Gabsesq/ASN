@@ -2,14 +2,24 @@ from openpyxl import load_workbook
 import xlrd
 import datetime
 import os
+import sys
 import tempfile
 from ExcelHelpers import (
     resource_path, oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length, FINISHED_FOLDER
 )
 
 
+
 # Define source file for TSC
 source_asn_xlsx = resource_path("assets/TSC/Blank TSC ASN.xlsx")
+print(f"Resolved path for source_asn_xlsx: {source_asn_xlsx}")
+
+# Check if the file exists
+if not os.path.exists(source_asn_xlsx):
+    print("File does not exist at:", source_asn_xlsx)
+else:
+    print("File found at:", source_asn_xlsx)
+
 
 # Function to copy data from uploaded .xlsx file to the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):

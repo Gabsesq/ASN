@@ -9,12 +9,24 @@ a = Analysis(
         ('templates', 'templates'),  # Add entire templates directory
         ('static', 'static'),
         ('assets/Chewy', 'assets/Chewy'),
+        ('assets/Chewy/Chewy 856 ASN - Copy.xlsx', 'assets/Chewy'),
+        ('assets/Chewy/Chewy UCC128 Label Request - Copy.xlsx', 'assets/Chewy'),
+
         ('assets/Murdochs', 'assets/Murdochs'),
+
         ('assets/Pet Supermarket', 'assets/Pet Supermarket'),
+
         ('assets/Scheels', 'assets/Scheels'),
+
         ('assets/Thrive Market', 'assets/Thrive Market'),
+        ('assets/Thrive Market/Blank Thrive Market UCC128 Label Request 7.19.24.xlsx', 'assets/Thrive Market'),
+        ('assets/Thrive Market/Thrive Market 856 Master Template.xlsx', 'assets/Thrive Market'),
+
         ('assets/TSC', 'assets/TSC'),
+        ('assets/TSC/Blank TSC ASN.xlsx', 'assets/TSC'),
+
         ('assets/TSC IS', 'assets/TSC IS'),
+
         ('Finished/Chewy', 'Finished/Chewy'),
         ('Finished/Murdochs', 'Finished/Murdochs'),
         ('Finished/PetSupermarket', 'Finished/PetSupermarket'),
