@@ -1,7 +1,24 @@
 import os
 import datetime
 from openpyxl.styles import NamedStyle, Alignment
+import sys
 
+
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+# Define shared directories
+UPLOAD_FOLDER = resource_path('uploads')
+FINISHED_FOLDER = resource_path('Finished')
 
 def format_cells_as_text(worksheet):
     """Format only the cells with data as text."""
@@ -220,3 +237,4 @@ def generate_rows(sheet, start_row, qty_column, column_count):
             break
 
     return generated_rows
+

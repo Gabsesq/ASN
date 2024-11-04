@@ -12,16 +12,8 @@ from processors.MurdochsASN import process_MurdochsASN
 from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
 from processors.ScheelsLabel import process_ScheelsLabel
+from ExcelHelpers import resource_path, UPLOAD_FOLDER, FINISHED_FOLDER
 
-def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and for PyInstaller"""
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
 
 # Initialize Flask with an absolute path to the templates folder
 app = Flask(__name__, template_folder=resource_path("templates"))

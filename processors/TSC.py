@@ -1,12 +1,15 @@
 from openpyxl import load_workbook
 import xlrd
 import datetime
+import os
+import tempfile
 from ExcelHelpers import (
-    oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length
+    resource_path, oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length, FINISHED_FOLDER
 )
 
+
 # Define source file for TSC
-source_asn_xlsx = "assets/TSC/Blank TSC ASN.xlsx"
+source_asn_xlsx = resource_path("assets/TSC/Blank TSC ASN.xlsx")
 
 # Function to copy data from uploaded .xlsx file to the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -149,21 +152,24 @@ def process_TSC(file_path):
     """Main function to process TSC files."""
     try:
         current_date = get_current_date()
+        
+        # Define output in a persistent FINISHED_FOLDER directory
+        po_number = extract_po_number(file_path, is_xlsx=file_path.endswith('.xlsx'))
+        backup_file = os.path.join(FINISHED_FOLDER, f"TSC/Tractor Supply ASN {po_number} {current_date}.xlsx")
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(backup_file), exist_ok=True)
 
         if file_path.endswith('.xlsx'):
-            po_number = extract_po_number(file_path, is_xlsx=True)
-            backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
             copy_xlsx_data(file_path, backup_file)
-
         elif file_path.endswith('.xls'):
-            po_number = extract_po_number(file_path, is_xlsx=False)
-            backup_file = f"Finished/TSC/Tractor Supply ASN {po_number} {current_date}.xlsx"
             convert_xls_data(file_path, backup_file)
         
-        # Return backup_file path to ensure it’s accessible for further processing
+        # Return backup_file path for further processing
         return backup_file
 
     except Exception as e:
         print(f"Error in process_TSC: {str(e)}")
         return None  # Ensure None is returned if an error occurs
+
 
