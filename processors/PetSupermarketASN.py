@@ -1,9 +1,13 @@
 from openpyxl import load_workbook
 import xlrd
+import os
 import datetime
+from ExcelHelpers import (
+    resource_path, FINISHED_FOLDER
+)
 
 # Define source files and destination copies for Pet Supermarket
-source_asn_xlsx = "assets/Pet Supermarket/Blank Pet Supermarket ASN.xlsx"
+source_asn_xlsx = resource_path("assets/Pet Supermarket/Blank Pet Supermarket ASN.xlsx")
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -162,20 +166,28 @@ def convert_xls_data(uploaded_file, dest_file):
     # Save the updated copy
     source_wb.save(dest_file)
 
-# Main function to process Pet Supermarket ASN files
 def process_PetSupermarketASN(file_path):
+    """Main function to process Pet Supermarket ASN files."""
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
 
+    # Determine if the file is XLSX or XLS and extract the PO number
     if file_path.endswith('.xlsx'):
         uploaded_wb = load_workbook(file_path)
         po_number = uploaded_wb.active['C4'].value
-        backup_file = f"Finished/PetSupermarket/Pet Supermarket ASN PO {po_number} {current_date}.xlsx"
-        copy_xlsx_data(file_path, backup_file)
-
     elif file_path.endswith('.xls'):
         xls_book = xlrd.open_workbook(file_path)
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
-        backup_file = f"Finished/PetSupermarket/Pet Supermarket ASN PO {po_number} {current_date}.xlsx"
+
+    # Define the backup file path in FINISHED_FOLDER with a PetSupermarket subfolder
+    backup_file = os.path.join(FINISHED_FOLDER, f"PetSupermarket/Pet Supermarket ASN PO {po_number} {current_date}.xlsx")
+    
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(backup_file), exist_ok=True)
+
+    # Perform the copy or conversion based on file type
+    if file_path.endswith('.xlsx'):
+        copy_xlsx_data(file_path, backup_file)
+    elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
 
     return backup_file

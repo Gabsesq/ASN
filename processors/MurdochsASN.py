@@ -3,11 +3,11 @@ import xlrd
 import datetime
 import os
 from ExcelHelpers import (
-    format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
+    resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
 
 # Define source files and destination copies for Chewy
-source_asn_xlsx = "assets/Murdochs/Blank Murdochs 856 ASN.xlsx"
+source_asn_xlsx = resource_path("assets/Murdochs/Blank Murdochs 856 ASN.xlsx")
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -156,24 +156,27 @@ def convert_xls_data(uploaded_file, dest_file):
             print(f"Error saving file: {str(e)}")
 
 def process_MurdochsASN(file_path):
+    """Main function to process Murdochs ASN files."""
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
 
-    # Determine if the file is XLSX or XLS
+    # Determine if the file is XLSX or XLS and extract the PO number
     if file_path.endswith('.xlsx'):
         uploaded_wb = load_workbook(file_path)
         po_number = uploaded_wb.active['C4'].value
-
     elif file_path.endswith('.xls'):
         xls_book = xlrd.open_workbook(file_path)
         po_number = xls_book.sheet_by_index(0).cell_value(3, 2)
 
-    # Define the backup file path
-    backup_file = f"Finished/Murdochs/Murdochs 856 ASN PO {po_number} {current_date}.xlsx"
+    # Define the backup file path in FINISHED_FOLDER with a Murdochs subfolder
+    backup_file = os.path.join(FINISHED_FOLDER, f"Murdochs/Murdochs 856 ASN PO {po_number} {current_date}.xlsx")
+    
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(backup_file), exist_ok=True)
 
-        # Perform the copy or conversion based on file type
+    # Perform the copy or conversion based on file type
     if file_path.endswith('.xlsx'):
         copy_xlsx_data(file_path, backup_file)
     elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
 
-    return backup_file  # Return the folder path for download
+    return backup_file

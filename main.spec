@@ -17,6 +17,8 @@ a = Analysis(
         ('assets/Pet Supermarket', 'assets/Pet Supermarket'),
 
         ('assets/Scheels', 'assets/Scheels'),
+        ('assets/Scheels/Blank Scheels 856 ASN.xlsx', 'assets/Scheels'),
+        ('assets/Scheels/Blank Scheels UCC128 Label Request.xlsx', 'assets/Scheels'),
 
         ('assets/Thrive Market', 'assets/Thrive Market'),
         ('assets/Thrive Market/Blank Thrive Market UCC128 Label Request 7.19.24.xlsx', 'assets/Thrive Market'),
