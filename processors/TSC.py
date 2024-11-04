@@ -112,28 +112,6 @@ def convert_xls_data(uploaded_file, dest_file):
     except Exception as e:
         print(f"Error in convert_xls_data: {str(e)}")
 
-def get_column_length(sheet, start_row):
-    """Calculate the number of non-empty rows starting from a given row."""
-    column_length = 0
-    total_rows = sheet.nrows  # Ensure we don't exceed the number of rows
-
-    while start_row <= total_rows:
-        try:
-            value = sheet.cell_value(start_row - 1, 0)  # Column A (index 0)
-            print(f"Row {start_row}: Value in A = '{value}'")
-
-            if value:
-                column_length += 1
-                start_row += 1
-            else:
-                break  # Stop when we encounter an empty cell
-        except IndexError as e:
-            print(f"IndexError accessing row {start_row - 1}, column 0: {str(e)}")
-            break
-
-    print(f"Final Column Length: {column_length}")
-    return max(1, column_length)  # Ensure at least 1 row is counted
-
 
 def sum_qty_values(sheet, start_row, column_index, column_length):
     """Sum the QTY values from the specified column and return the total."""
