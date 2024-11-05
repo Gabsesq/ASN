@@ -113,29 +113,6 @@ def convert_xls_data(uploaded_file, dest_file):
         print(f"Error in convert_xls_data: {str(e)}")
 
 
-def sum_qty_values(sheet, start_row, column_index, column_length):
-    """Sum the QTY values from the specified column and return the total."""
-    qty_total = 0
-    for i in range(start_row, start_row + column_length):
-        try:
-            value = sheet.cell_value(i - 1, column_index)
-            print(f"Row {i}: Raw QTY value = '{value}'")
-
-            # Handle text-formatted numbers by converting them to float
-            if isinstance(value, str) and value.isnumeric():
-                value = float(value)
-
-            if isinstance(value, (int, float)):  # Ensure the value is numeric
-                qty_total += value
-            else:
-                print(f"Skipping non-numeric value at row {i}: {value}")
-        except IndexError as e:
-            print(f"IndexError at row {i - 1}, column {column_index}: {str(e)}")
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-    print(f"Final QTY Total: {qty_total}")
-    return qty_total
-
 def process_TSC(file_path):
     """Main function to process TSC files."""
     try:
