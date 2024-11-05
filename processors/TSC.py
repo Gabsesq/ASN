@@ -75,7 +75,7 @@ def convert_xls_data(uploaded_file, dest_file):
         data_map = {
             (13, 1): 'E3', (13, 3): 'E4', (13, 4): 'E5',
             (13, 9): 'E6', (13, 10): 'E7', (13, 11): 'E8',
-            (8, 2): 'B11'
+            (8, 2): 'B11', (6,2) : 'E11'
         }
         for (row, col), copy_cell in data_map.items():
             try:
@@ -92,7 +92,7 @@ def convert_xls_data(uploaded_file, dest_file):
 
         # Perform many-to-many copy operations with debugging
         manyToMany(xls_sheet, source_ws, 18, 0, 'A', 17, column_length)  # Item No
-        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length)    # Copy 'C4' to 'B17'
+        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length-1)    # Copy 'C4' to 'B17'
         manyToMany(xls_sheet, source_ws, 18, 4, 'D', 17, column_length)  # UPS
         manyToMany(xls_sheet, source_ws, 18, 5, 'E', 17, column_length)  # Buyer Part
         manyToMany(xls_sheet, source_ws, 18, 6, 'F', 17, column_length)  # Vendor Part
