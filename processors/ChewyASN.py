@@ -72,6 +72,7 @@ def convert_xls_data(uploaded_file, dest_file):
 
     # Starting row in output sheet where data should be copied
     output_row = 21
+    total_lines = 0
 
     # Loop through each item in the upload sheet
     item_start_row = 21  # Row index where items start in the upload sheet
@@ -83,19 +84,41 @@ def convert_xls_data(uploaded_file, dest_file):
             vendor_part = xls_sheet.cell_value(item_start_row - 1, 6)  # Column G for Vendor Part #
             upc14 = xls_sheet.cell_value(item_start_row - 1, 7)  # Column H for UPC14
             sku = xls_sheet.cell_value(item_start_row - 1, 8)  # Column I for SKU
+            total_lines += qty
+
 
             # Repeat each field `qty` times in the output sheet
             for _ in range(qty):
                 source_ws[f'A{output_row}'] = output_row - 20  # Item No count (1, 2, 3, ...)
                 source_ws[f'B{output_row}'] = qty  # QTY
-                source_ws[f'C{output_row}'] = "CA"  # Assuming UOM is always "CA", adjust as needed
                 source_ws[f'L{output_row}'] = description
                 source_ws[f'E{output_row}'] = upc14  # Placeholder for UPC if needed
                 source_ws[f'F{output_row}'] = vendor_part
                 source_ws[f'H{output_row}'] = "1"  # Assuming UOM is always "CA", adjust as needed
-                #source_ws[f'H{output_row}'] = upc14
                 source_ws[f'G{output_row}'] = sku
                 output_row += 1  # Move to the next row in the output sheet
+
+                                # Conditional logic based on QTY value
+            if qty > 10:
+                # Define data map for cases where QTY > 10
+                data_map = {
+                    'B13': 'SAIA',  # Adding word values directly
+                    'B16': 'SAIA',
+                    'E14': 'P',
+                }
+            else:
+                # Define data map for cases where QTY <= 10
+                data_map = {
+                    'B13': 'FEDG',
+                    'B16': 'Fedex',
+                    'E16': total_lines,
+                }
+
+            # Apply data mapping based on the condition
+            for src_cell, value in data_map.items():
+                # Instead of fetching value from xls_sheet, we use the literal string value
+                source_ws[src_cell] = value
+
 
             item_start_row += 1  # Move to the next item row in the upload sheet
 
@@ -106,10 +129,12 @@ def convert_xls_data(uploaded_file, dest_file):
         except IndexError:
             # Reached the end of the data
             break
+    
+
 
     # Use oneToMany for additional fields if required (example for C4, PO)
-    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=21, column_length=output_row - 21)
-    oneToMany(xls_sheet, source_ws, row=15, col=11, target_column='C', start_row=21, column_length=output_row - 21)
+    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=21, column_length=output_row - 21) #PO
+    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=21, column_length=output_row - 21) #PO Date
     oneToMany(xls_sheet, source_ws, row=20, col=2, target_column='I', start_row=21, column_length=output_row - 21)
 
     # Save the updated copy
