@@ -92,7 +92,7 @@ def convert_xls_data(uploaded_file, dest_file):
                 source_ws[f'L{output_row}'] = description
                 source_ws[f'E{output_row}'] = upc14  # Placeholder for UPC if needed
                 source_ws[f'F{output_row}'] = vendor_part
-                source_ws[f'C{output_row}'] = "1"  # Assuming UOM is always "CA", adjust as needed
+                source_ws[f'H{output_row}'] = "1"  # Assuming UOM is always "CA", adjust as needed
                 #source_ws[f'H{output_row}'] = upc14
                 source_ws[f'G{output_row}'] = sku
                 output_row += 1  # Move to the next row in the output sheet
