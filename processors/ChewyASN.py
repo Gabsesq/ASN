@@ -89,10 +89,10 @@ def convert_xls_data(uploaded_file, dest_file):
                 source_ws[f'A{output_row}'] = output_row - 20  # Item No count (1, 2, 3, ...)
                 source_ws[f'B{output_row}'] = qty  # QTY
                 source_ws[f'C{output_row}'] = "CA"  # Assuming UOM is always "CA", adjust as needed
-                source_ws[f'D{output_row}'] = xls_sheet.cell_value(item_start_row - 1, 3)  # Unit Price
                 source_ws[f'L{output_row}'] = description
                 source_ws[f'E{output_row}'] = upc14  # Placeholder for UPC if needed
                 source_ws[f'F{output_row}'] = vendor_part
+                source_ws[f'C{output_row}'] = "1"  # Assuming UOM is always "CA", adjust as needed
                 #source_ws[f'H{output_row}'] = upc14
                 source_ws[f'G{output_row}'] = sku
                 output_row += 1  # Move to the next row in the output sheet
