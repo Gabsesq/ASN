@@ -54,8 +54,6 @@ def convert_xls_data(uploaded_file, dest_file):
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
 
-    format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
 
     # Mapping uploaded cells to copy cells
     data_map = {
@@ -79,44 +77,50 @@ def convert_xls_data(uploaded_file, dest_file):
         print(f"Total Quantity: {total_qty}. Performing extended operations...")
 
         column_length = get_column_length(xls_sheet, start_row=17)
-        #oneToMany(xls_sheet, source_ws, row, col, target_column, start_row, column_length):
-        #manyToMany(xls_sheet, source_ws, start_row, start_col, dest_col, dest_start_row, column_length):
-        try:
-            if column_length > 0:
-                oneToMany(xls_sheet, source_ws, 3, 2, 'A', 14, column_length)  # PO number
-                oneToMany(xls_sheet, source_ws, 12, 11, 'B', 14, column_length) #zipcode
-                typedValue(source_ws, "Fedex", 'C', 14, column_length) # Carrier name
-                manyToMany(xls_sheet, source_ws, 17, 5, 'E', 14, column_length) # UPC
-                typedValue(source_ws, "1", 'F', 14, column_length ) # Carton QTY, always 1
-                manyToMany(xls_sheet, source_ws, 17, 4, 'G', 14, column_length) # Description
-                manyToMany(xls_sheet, source_ws, 17, 1, 'H', 14, column_length) # Labels
+        # oneToMany(xls_sheet, source_ws, row, col, target_column, start_row, column_length):
+        # manyToMany(xls_sheet, source_ws, start_row, start_col, dest_col, dest_start_row, column_length):
+        
+        if column_length > 0:
+            oneToMany(xls_sheet, source_ws, 3, 2, 'A', 14, column_length)  # PO number
+            oneToMany(xls_sheet, source_ws, 12, 11, 'B', 14, column_length) # zipcode
+            typedValue(source_ws, "Fedex", 'C', 14, column_length) # Carrier name
+            manyToMany(xls_sheet, source_ws, 17, 5, 'E', 14, column_length) # UPC
+            typedValue(source_ws, "1", 'F', 14, column_length) # Carton QTY, always 1
+            manyToMany(xls_sheet, source_ws, 17, 4, 'G', 14, column_length) # Description
+            manyToMany(xls_sheet, source_ws, 17, 1, 'H', 14, column_length) # Labels
 
-                
 
-        except Exception as e:
-            print(f"Error during extended operations: {str(e)}")
 
-    # Logic for total_qty < 10
+    # Logic for total_qty > 10
     else:
         print(f"Total Quantity: {total_qty}. Performing basic operations...")
-
         # Basic data mapping for smaller quantities
-        data_map = {
-            (17, 1): 'A14',   # PO
-            (12, 6): 'B14',   # Zip
+        source_ws["E14"] = "mixed"   # UPC
+        data_map2 = {
+            (3, 2): 'A14',   # PO
+            (11, 11): 'B14',   # Zip
             "SAIA": 'C14',    # Carrier
-            "mixed": 'E14',   # UPC
-            total_qty: 'F14',  # Total QTY
+            total_qty: 'F14',  #QTY
             "mixed": 'G14',   # Description
             "1": 'H14'        # Labels
         }
 
-        for key, copy_cell in data_map.items():
-            value = key if isinstance(key, str) else xls_sheet.cell_value(*key)
+        # Loop through data_map2 and set values accordingly
+        for key, copy_cell in data_map2.items():
+            if isinstance(key, tuple):
+                # Key is a tuple (row, col) - use cell value from xls_sheet
+                row, col = key
+                value = xls_sheet.cell_value(row, col)
+            elif isinstance(key, (int, float)):
+                # Key is an integer or float - likely total_qty or other numbers
+                value = key
+            else:
+                # Key is a string - directly use the string value
+                value = key
+            
+            # Assign the value to the corresponding cell in source_ws
             source_ws[copy_cell] = value
 
-    format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
 
     # Save the updated file
     try:

@@ -75,7 +75,7 @@ def convert_xls_data(uploaded_file, dest_file):
         data_map = {
             (13, 1): 'E3', (13, 3): 'E4', (13, 4): 'E5',
             (13, 9): 'E6', (13, 10): 'E7', (13, 11): 'E8',
-            (8, 2): 'B11'
+            (8, 2): 'B11', (6,2) : 'E11'
         }
         for (row, col), copy_cell in data_map.items():
             try:
@@ -92,7 +92,7 @@ def convert_xls_data(uploaded_file, dest_file):
 
         # Perform many-to-many copy operations with debugging
         manyToMany(xls_sheet, source_ws, 18, 0, 'A', 17, column_length)  # Item No
-        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length)    # Copy 'C4' to 'B17'
+        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length-1)    # Copy 'C4' to 'B17'
         manyToMany(xls_sheet, source_ws, 18, 4, 'D', 17, column_length)  # UPS
         manyToMany(xls_sheet, source_ws, 18, 5, 'E', 17, column_length)  # Buyer Part
         manyToMany(xls_sheet, source_ws, 18, 6, 'F', 17, column_length)  # Vendor Part
@@ -112,29 +112,6 @@ def convert_xls_data(uploaded_file, dest_file):
     except Exception as e:
         print(f"Error in convert_xls_data: {str(e)}")
 
-
-def sum_qty_values(sheet, start_row, column_index, column_length):
-    """Sum the QTY values from the specified column and return the total."""
-    qty_total = 0
-    for i in range(start_row, start_row + column_length):
-        try:
-            value = sheet.cell_value(i - 1, column_index)
-            print(f"Row {i}: Raw QTY value = '{value}'")
-
-            # Handle text-formatted numbers by converting them to float
-            if isinstance(value, str) and value.isnumeric():
-                value = float(value)
-
-            if isinstance(value, (int, float)):  # Ensure the value is numeric
-                qty_total += value
-            else:
-                print(f"Skipping non-numeric value at row {i}: {value}")
-        except IndexError as e:
-            print(f"IndexError at row {i - 1}, column {column_index}: {str(e)}")
-        except Exception as e:
-            print(f"Unexpected error: {str(e)}")
-    print(f"Final QTY Total: {qty_total}")
-    return qty_total
 
 def process_TSC(file_path):
     """Main function to process TSC files."""
