@@ -154,7 +154,7 @@ def process_TSC(file_path):
             convert_xls_data(file_path, backup_file)
         
         # Return backup_file path for further processing
-        return backup_file
+        return backup_file, po_number
 
     except Exception as e:
         print(f"Error in process_TSC: {str(e)}")

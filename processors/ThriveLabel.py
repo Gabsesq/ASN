@@ -144,11 +144,11 @@ def process_ThriveLabel(file_path):
 
      # Ensure the Thrive directory exists in the FINISHED_FOLDER
     os.makedirs(os.path.dirname(backup_file), exist_ok=True)
-    
+
     # Perform the copy or conversion based on file type
     if file_path.endswith('.xlsx'):
         copy_xlsx_data(file_path, backup_file)
     elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
 
-    return backup_file
+    return backup_file, po_number

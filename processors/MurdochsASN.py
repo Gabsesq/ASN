@@ -179,4 +179,4 @@ def process_MurdochsASN(file_path):
     elif file_path.endswith('.xls'):
         convert_xls_data(file_path, backup_file)
 
-    return backup_file
+    return backup_file, po_number
