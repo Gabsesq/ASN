@@ -3,11 +3,11 @@ import xlrd
 import datetime
 import os
 from ExcelHelpers import (
-    resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
+    get_column_length, resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
 
 # Define source files and destination copies for Chewy
-source_asn_xlsx = resource_path("assets\Scheels\Blank Scheels 856 ASN.xlsx")
+source_asn_xlsx = resource_path("assets/Scheels/Blank Scheels 856 ASN.xlsx")
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -57,12 +57,13 @@ def convert_xls_data(uploaded_file, dest_file):
     align_cells_left(source_ws)
     # Mapping uploaded cells to copy cells
     data_map = {
-        (12, 1): 'F3',   # 'B13' -> (18, 2) name
-        (12, 4): 'F4',   # 'E13' -> (18, 5) add 1
-        (12, 5): 'F5',   # 'E13' -> (18, 5) add 1
-        (17, 8): 'F6',  # 'J18' -> (18, 10) city
-        (17, 9): 'F7',  # 'K18' -> (18, 11) State
-        (17, 10): 'F8',  # 'L18' -> (18, 12) Zip
+        (12, 1): 'G3',  # name
+        (12, 3): 'G4',   # number
+        (12, 4): 'G5',   # add 1
+        (12, 7): 'G6',   # add 2
+        (12, 9): 'G7',  # city
+        (12, 10): 'G8',  # State
+        (12, 11): 'G9',  # Zip
     }
     
 
@@ -70,79 +71,19 @@ def convert_xls_data(uploaded_file, dest_file):
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
 
-      # Debugging: Print the total number of rows and columns in the uploaded sheet
-        total_rows = xls_sheet.nrows
-        total_cols = xls_sheet.ncols
-        print(f"Total rows: {total_rows}, Total columns: {total_cols}")
-
-        # Ensure you don't go out of bounds
-        if total_rows < 17:
-            print(f"Error: Not enough rows to start processing from row 17.")
-            return
-
         # Dynamic column length calculation with boundary check
-        row = 17
-        column_length = 0
+        start_row = 17
+        column_length = get_column_length(xls_sheet, start_row)
+        print("Final Column Length:", column_length)  # Confirm calculated column length
 
-        while row < total_rows:  # Ensure we don't exceed the available rows
-            try:
-                value = xls_sheet.cell_value(row - 1, 0)  # Column A (index 0)
-                print(f"Row {row}: Value in A = {value}")
-
-                if value:
-                    column_length += 1
-                    row += 1
-                else:
-                    break  # Stop if an empty cell is found
-            except IndexError as e:
-                print(f"Error accessing row {row - 1}, column 0: {str(e)}")
-                break
-
-        print(f"Dynamic Length of Column A: {column_length}")
-
-        # Use helper function safely with boundary checks
-        try:
-            if column_length > 0:
-                manyToMany(xls_sheet, source_ws, 16, 6, 'F', 14, column_length)  # A23 to A19       Vendor Part
-                manyToMany(xls_sheet, source_ws, 16, 1, 'G', 14, column_length)  # A23 to A19       QTY
-                manyToMany(xls_sheet, source_ws, 16, 1, 'H', 14, column_length)  # A23 to A19       Labels
-
-            else:
-                print("No data found in column A starting from row 23.")
-        except Exception as e:
-            print(f"Error during copy operations: {str(e)}")
-
-        # 1. PO #
-        oneToMany(
-            xls_sheet=xls_sheet,
-            source_ws=source_ws,
-            row=3,  # 'C4' -> row 4 in zero-based index
-            col=2,  # 'C4' -> column 3 in zero-based index
-            target_column='A',  # Paste into column B
-            start_row=14,  # Start from row 19
-            column_length=column_length,  # Loop for the determined length
-        )
-
-        # 2. Copy the value from 'H4' to 'C19' and down for column_length rows
-        oneToMany(
-            xls_sheet=xls_sheet,
-            source_ws=source_ws,
-            row=12,  # 'H4' -> row 4 in zero-based index
-            col=11,  # 'H4' -> column 8 in zero-based index
-            target_column='B',  # Paste into column C
-            start_row=14,  # Start from row 19
-            column_length=column_length,  # Loop for the determined length
-        )
-
-
-        # 3. Paste static value "N/A" into 'D19' and down
-        typedValue(
-            source_ws=source_ws,
-            static_value="Fed Ex",  # Static value
-            target_column='C',
-            start_row=14,
-            column_length=column_length
-        )
+        manyToMany(xls_sheet, source_ws, 17, 0, 'A', 19, column_length)  # Line number 
+        oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=3, col=2, target_column='B', start_row=19, column_length=column_length) #PO
+        oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=3, col=7, target_column='C', start_row=19, column_length=column_length) #PO date
+        manyToMany(xls_sheet, source_ws, 17, 5, 'E', 19, column_length)  # UPC
+        manyToMany(xls_sheet, source_ws, 17, 6, 'F', 19, column_length)  # Buyer/Vendor part?
+        manyToMany(xls_sheet, source_ws, 17, 2, 'H', 19, column_length)  # UOM 
+        manyToMany(xls_sheet, source_ws, 17, 1, 'G', 19, column_length)  # QTY  
+        manyToMany(xls_sheet, source_ws, 17, 4, 'I', 19, column_length)  # Description
 
         # Save the updated file
         try:
@@ -150,6 +91,7 @@ def convert_xls_data(uploaded_file, dest_file):
             print(f"File saved successfully as {dest_file}.")
         except Exception as e:
             print(f"Error saving file: {str(e)}")
+        print("column length ", column_length)
 
 def process_ScheelsASN(file_path):
     """Main function to process Scheels 856 ASN files."""

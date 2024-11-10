@@ -7,7 +7,7 @@ from ExcelHelpers import (
 )
 
 # Define source files and destination copies for Chewy
-source_asn_xlsx = resource_path("assets\Murdochs\Blank Murdochs UCC128 Label Request.xlsx")
+source_asn_xlsx = resource_path("assets/Murdochs/Blank Murdochs UCC128 Label Request.xlsx")
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -57,12 +57,12 @@ def convert_xls_data(uploaded_file, dest_file):
     align_cells_left(source_ws)
     # Mapping uploaded cells to copy cells
     data_map = {
-        (17, 1): 'F3',   # 'B18' -> (18, 2) name
-        (17, 4): 'F4',   # 'E18' -> (18, 5) add 1
-        (17, 5): 'F5',   # 'E18' -> (18, 5) add 2
-        (17, 9): 'F6',  # 'J18' -> (18, 10) city
-        (17, 10): 'F7',  # 'K18' -> (18, 11) State
-        (17, 11): 'F8',  # 'L18' -> (18, 12) Zip
+        (12, 1): 'F3',   # 'B18' -> (18, 2) name
+        (12, 4): 'F4',   # 'E18' -> (18, 5) add 1
+        (12, 5): 'F5',   # 'E18' -> (18, 5) add 2
+        (12, 9): 'F6',  # 'J18' -> (18, 10) city
+        (12, 10): 'F7',  # 'K18' -> (18, 11) State
+        (12, 11): 'F8',  # 'L18' -> (18, 12) Zip
     }
     
 
