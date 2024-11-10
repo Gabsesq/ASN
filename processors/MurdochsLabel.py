@@ -7,7 +7,7 @@ from ExcelHelpers import (
 )
 
 # Define source files and destination copies for Chewy
-source_asn_xlsx = resource_path("assets\Murdochs\Blank Murdochs UCC128 Label Request.xlsx")
+source_asn_xlsx = resource_path("assets/Murdochs/Blank Murdochs UCC128 Label Request.xlsx")
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
