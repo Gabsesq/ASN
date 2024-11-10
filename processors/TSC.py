@@ -5,7 +5,7 @@ import os
 import sys
 import tempfile
 from ExcelHelpers import (
-    resource_path, oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length, FINISHED_FOLDER
+    QTY_total, resource_path, oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length, FINISHED_FOLDER
 )
 
 
@@ -101,7 +101,7 @@ def convert_xls_data(uploaded_file, dest_file):
         manyToMany(xls_sheet, source_ws, 18, 8, 'I', 17, column_length)  # Description
 
         # Sum the QTY values from column B (index 1) and place the total in E13
-        qty_total = sum_qty_values(xls_sheet, start_row=17, column_index=1, column_length=column_length)
+        qty_total = QTY_total(xls_sheet, 18 , 1)
         source_ws['E13'] = qty_total
         print(f"Total QTY placed in E13: {qty_total}")
 

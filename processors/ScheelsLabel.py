@@ -3,7 +3,7 @@ import xlrd
 import datetime
 import os
 from ExcelHelpers import (
-    resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
+    get_column_length, resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
 
 # Define source files and destination copies for Chewy
@@ -70,79 +70,16 @@ def convert_xls_data(uploaded_file, dest_file):
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
 
-      # Debugging: Print the total number of rows and columns in the uploaded sheet
-        total_rows = xls_sheet.nrows
-        total_cols = xls_sheet.ncols
-        print(f"Total rows: {total_rows}, Total columns: {total_cols}")
-
-        # Ensure you don't go out of bounds
-        if total_rows < 23:
-            print(f"Error: Not enough rows to start processing from row 23.")
-            return
-
         # Dynamic column length calculation with boundary check
-        row = 17
-        column_length = 0
+        start_row = 17
+        column_length = get_column_length(xls_sheet, start_row)
+        print("Final Column Length:", column_length)  # Confirm calculated column length
 
-        while row < total_rows:  # Ensure we don't exceed the available rows
-            try:
-                value = xls_sheet.cell_value(row - 1, 0)  # Column A (index 0)
-                print(f"Row {row}: Value in A = {value}")
+        oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=3, col=2, target_column='A', start_row=14, column_length=column_length) #PO
+        oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=12, col=11, target_column='B', start_row=14, column_length=column_length) #Zip Code
+        manyToMany(xls_sheet, source_ws, 17, 6, 'F', 14, column_length)  # Buyer/Vendor part?
+        manyToMany(xls_sheet, source_ws, 17, 1, 'G', 14, column_length)  # QTY  
 
-                if value:
-                    column_length += 1
-                    row += 1
-                else:
-                    break  # Stop if an empty cell is found
-            except IndexError as e:
-                print(f"Error accessing row {row - 1}, column 0: {str(e)}")
-                break
-
-        print(f"Dynamic Length of Column A: {column_length}")
-
-        # Use helper function safely with boundary checks
-        try:
-            if column_length > 0:
-                manyToMany(xls_sheet, source_ws, 23, 6, 'F', 14, column_length)  # A23 to A19       Part number
-                # manyToMany(xls_sheet, source_ws, 23, 1, 'G', 14, column_length)  # B23 to I19       QTY
-                # manyToMany(xls_sheet, source_ws, 23, 1, 'H', 14, column_length)  # B23 to I19       QTY
-
-            else:
-                print("No data found in column A starting from row 23.")
-        except Exception as e:
-            print(f"Error during copy operations: {str(e)}")
-
-                # 1. Copy the value from 'C4' to 'B19' and down for column_length rows
-        oneToMany(
-            xls_sheet=xls_sheet,
-            source_ws=source_ws,
-            row=3,  # 'C4' -> row 4 in zero-based index
-            col=2,  # 'C4' -> column 3 in zero-based index
-            target_column='A',  # Paste into column B
-            start_row=14,  # Start from row 19
-            column_length=column_length,  # Loop for the determined length
-        )
-
-        # 2. Copy the value from 'H4' to 'C19' and down for column_length rows
-        oneToMany(
-            xls_sheet=xls_sheet,
-            source_ws=source_ws,
-            row=17,  # 'L18' -> row 4 in zero-based index
-            col=11,  # 'L18' -> column 8 in zero-based index
-            target_column='B',  # Paste into column C
-            start_row=14,  # Start from row 19
-            column_length=column_length,  # Loop for the determined length
-        )
-
-
-        # 3. Paste static value "N/A" into 'D19' and down
-        typedValue(
-            source_ws=source_ws,
-            static_value="Fed Ex",  # Static value
-            target_column='C',
-            start_row=14,
-            column_length=column_length
-        )
 
         # Save the updated file
         try:
@@ -150,6 +87,9 @@ def convert_xls_data(uploaded_file, dest_file):
             print(f"File saved successfully as {dest_file}.")
         except Exception as e:
             print(f"Error saving file: {str(e)}")
+        print("column length ", column_length)
+
+
 
 def process_ScheelsLabel(file_path):
     """Main function to process Scheels UCC128 Label Request files."""
