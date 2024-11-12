@@ -5,6 +5,7 @@ import datetime
 from ExcelHelpers import (
     resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left
 )
+from upc_counts import counts
 
 # Define source files and destination copies for Pet Supermarket
 source_asn_xlsx = resource_path("assets/Pet Supermarket/Blank Pet Supermarket ASN.xlsx")
@@ -98,6 +99,7 @@ def convert_xls_data(uploaded_file, dest_file):
     # Copy the value from C7 in the upload file into B12 in the output file
     delivery_date = xls_sheet.cell_value(6, 2)  # Row 7 (index 6), Column C (index 2)
     source_ws['B12'] = delivery_date
+
 
     # Copy data from column A (starting at row 16) in the uploaded file to column A (starting at row 19) in the output file
     row = 16

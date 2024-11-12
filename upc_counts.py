@@ -1,4 +1,4 @@
-# counts
+# upc_counts.py
 
 counts = {
     "850016364883": 24,  # Edi-HJ-PB-LRG
