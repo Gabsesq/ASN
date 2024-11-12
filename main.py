@@ -94,6 +94,14 @@ def download_file(file_path):
 
     return send_file(full_file_path, as_attachment=True)
 
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    """Shut down the server."""
+    shutdown_function = request.environ.get('werkzeug.server.shutdown')
+    if shutdown_function:
+        shutdown_function()
+    return 'Server shutting down...'
+
 if __name__ == '__main__':
     # Automatically open the default web browser to the Flask app’s URL
     port = 5000  # Set your preferred port if needed

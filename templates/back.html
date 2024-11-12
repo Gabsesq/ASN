@@ -68,5 +68,16 @@
         </a>
     </div>
     {% endif %}
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/" class="button-8">Go Back to Upload Page</a>
+    </div>
+    <!-- JavaScript to shut down the server when the user navigates away -->
+    <script>
+        window.addEventListener('beforeunload', function() {
+            navigator.sendBeacon('/shutdown');
+        });
+    </script>
+    
 </body>
 </html>

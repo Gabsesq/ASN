@@ -126,6 +126,12 @@
             uploadForm.submit(); // Auto-submit the form once a file is chosen
         }
     }
+
+    // Shutdown the server when the page is closed or navigated away
+    window.addEventListener('beforeunload', function() {
+        navigator.sendBeacon('/shutdown');
+    });
+    
 </script>
 
 </body>
