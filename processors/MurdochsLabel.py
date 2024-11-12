@@ -53,8 +53,6 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_asn_xlsx)
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
-    format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
     # Mapping uploaded cells to copy cells
     data_map = {
         (17, 1): 'F3',   # 'B18' -> (18, 2) name
@@ -143,7 +141,9 @@ def convert_xls_data(uploaded_file, dest_file):
             start_row=14,
             column_length=column_length
         )
-
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
+        align_cells_left(source_ws)
         # Save the updated file
         try:
             source_wb.save(dest_file)

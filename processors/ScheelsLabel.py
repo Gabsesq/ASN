@@ -80,6 +80,9 @@ def convert_xls_data(uploaded_file, dest_file):
         manyToMany(xls_sheet, source_ws, 17, 6, 'F', 14, column_length)  # Buyer/Vendor part?
         manyToMany(xls_sheet, source_ws, 17, 1, 'G', 14, column_length)  # QTY  
 
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
+        align_cells_left(source_ws)
 
         # Save the updated file
         try:

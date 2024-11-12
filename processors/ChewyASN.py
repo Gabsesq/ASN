@@ -15,8 +15,6 @@ def copy_xlsx_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_asn_xlsx)
     uploaded_ws = uploaded_wb.active
     source_ws = source_wb.active
-    format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
 
 
     
@@ -56,8 +54,6 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_asn_xlsx)
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
-    format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
 
     # Mapping uploaded cells to copy cells
     data_map = {
@@ -99,7 +95,7 @@ def convert_xls_data(uploaded_file, dest_file):
                 output_row += 1  # Move to the next row in the output sheet
 
                                 # Conditional logic based on QTY value
-            if qty > 10:
+            if total_lines > 10:
                 # Define data map for cases where QTY > 10
                 data_map = {
                     'B13': 'SAIA',  # Adding word values directly
@@ -136,6 +132,10 @@ def convert_xls_data(uploaded_file, dest_file):
     oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=21, column_length=output_row - 21) #PO
     oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=21, column_length=output_row - 21) #PO Date
     oneToMany(xls_sheet, source_ws, row=20, col=2, target_column='I', start_row=21, column_length=output_row - 21)
+
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
+    align_cells_left(source_ws)
 
     # Save the updated copy
     source_wb.save(dest_file)

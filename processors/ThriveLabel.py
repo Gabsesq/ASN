@@ -120,7 +120,10 @@ def convert_xls_data(uploaded_file, dest_file):
             
             # Assign the value to the corresponding cell in source_ws
             source_ws[copy_cell] = value
-
+    
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
+    align_cells_left(source_ws)
 
     # Save the updated file
     try:

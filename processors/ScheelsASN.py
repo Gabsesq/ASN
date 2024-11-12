@@ -53,8 +53,7 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_asn_xlsx)
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
-    format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
+    
     # Mapping uploaded cells to copy cells
     data_map = {
         (12, 1): 'G3',  # name
@@ -84,6 +83,10 @@ def convert_xls_data(uploaded_file, dest_file):
         manyToMany(xls_sheet, source_ws, 17, 2, 'H', 19, column_length)  # UOM 
         manyToMany(xls_sheet, source_ws, 17, 1, 'G', 19, column_length)  # QTY  
         manyToMany(xls_sheet, source_ws, 17, 4, 'I', 19, column_length)  # Description
+
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
+        align_cells_left(source_ws)
 
         # Save the updated file
         try:

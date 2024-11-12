@@ -54,6 +54,9 @@ def copy_xlsx_data(uploaded_file, dest_file):
         # Copy value from 'C4' into 'B17' and down using oneToMany
         oneToMany(uploaded_ws, source_ws, 3, 2, 'B', 17, column_length)
 
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
+        align_cells_left(source_ws)
         source_wb.save(dest_file)
         print(f"Saved file successfully as {dest_file}")
 

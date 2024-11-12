@@ -93,7 +93,7 @@ def convert_xls_data(uploaded_file, dest_file):
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
 
-    if QTY_total < 16:
+    if QTY_total < 11:
         # Track numbers from A21 and below, copy to A20 in the copy
         row = 21
         copy_row = 14
@@ -165,6 +165,7 @@ def convert_xls_data(uploaded_file, dest_file):
 
 
     format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
     align_cells_left(source_ws)
 
     # Save the updated copy

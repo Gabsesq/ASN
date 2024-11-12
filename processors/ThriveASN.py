@@ -87,6 +87,7 @@ def convert_xls_data(uploaded_file, dest_file):
 
     format_cells_as_text(source_ws)
     align_cells_left(source_ws)
+    align_cells_left(source_ws)
 
     # Save the updated workbook
     source_wb.save(dest_file)

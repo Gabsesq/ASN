@@ -3,7 +3,7 @@ import xlrd
 import os
 import datetime
 from ExcelHelpers import (
-    resource_path, FINISHED_FOLDER
+    resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left
 )
 
 # Define source files and destination copies for Pet Supermarket
@@ -81,6 +81,9 @@ def copy_xlsx_data(uploaded_file, dest_file):
         source_ws[f'K{i}'] = uploaded_ws[f'I{row}'].value
         row += 1
 
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
+
     # Save the updated copy
     source_wb.save(dest_file)
 
@@ -90,6 +93,11 @@ def convert_xls_data(uploaded_file, dest_file):
     source_wb = load_workbook(source_asn_xlsx)
     source_ws = source_wb.active
     xls_sheet = xls_book.sheet_by_index(0)
+    
+
+    # Copy the value from C7 in the upload file into B12 in the output file
+    delivery_date = xls_sheet.cell_value(6, 2)  # Row 7 (index 6), Column C (index 2)
+    source_ws['B12'] = delivery_date
 
     # Copy data from column A (starting at row 16) in the uploaded file to column A (starting at row 19) in the output file
     row = 16
@@ -163,6 +171,9 @@ def convert_xls_data(uploaded_file, dest_file):
         source_ws[f'K{i}'] = xls_sheet.cell_value(row - 1, 8)
         row += 1
 
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
+    align_cells_left(source_ws)
     # Save the updated copy
     source_wb.save(dest_file)
 

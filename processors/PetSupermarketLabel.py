@@ -3,7 +3,7 @@ import datetime
 from openpyxl import load_workbook
 import xlrd
 from ExcelHelpers import (
-    resource_path, FINISHED_FOLDER
+    resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left
 )
 
 
@@ -60,6 +60,9 @@ def convert_xls_data(uploaded_file, dest_file):
     source_ws['G14'] = "mixed"
     source_ws['H14'] = 1
 
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
+    align_cells_left(source_ws)
     # Save the updated copy
     source_wb.save(dest_file)
 
