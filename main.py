@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, send_file
 import os
 import sys
+import webbrowser
 from processors.ChewyASN import process_ChewyASN
 from processors.ChewyLabel import process_ChewyLabel
 from processors.TSC import process_TSC
@@ -94,4 +95,9 @@ def download_file(file_path):
     return send_file(full_file_path, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Automatically open the default web browser to the Flask app’s URL
+    port = 5000  # Set your preferred port if needed
+    url = f"http://127.0.0.1:{port}"
+    webbrowser.open(url)  # Open the browser to this URL
+    
+    app.run(host="0.0.0.0", port=port)  # Start the Flask app
