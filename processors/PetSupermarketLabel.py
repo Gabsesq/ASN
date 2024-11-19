@@ -5,7 +5,7 @@ import xlrd
 from ExcelHelpers import (
     resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left
 )
-from upc_counts import counts
+from upc_counts import counts, calculate_total_cases
 
 
 # Define source files and destination copies for Pet Supermarket
@@ -54,26 +54,11 @@ def convert_xls_data(uploaded_file, dest_file):
     for (row, col), copy_cell in data_map.items():
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
-    
-    # Calculate total cases
-    total_cases = 0  # Initialize the total cases counter
 
-    # Iterate over rows starting from the relevant row for Item No.
-    for row in range(15, xls_sheet.nrows):  # Assuming data starts from row 16 in the uploaded file
-        try:
-            upc = str(int(xls_sheet.cell_value(row, 5)))  # UPC column (F = index 5), converting to string
-            qty = int(xls_sheet.cell_value(row, 1))  # QTY column (B = index 1)
+    # Calculate total cases using the helper function
+    total_cases = calculate_total_cases(xls_sheet, start_row=15, upc_col=5, qty_col=1)
 
-            if upc in counts:
-                items_per_case = counts[upc]
-                cases = qty // items_per_case  # Calculate the number of cases
-                total_cases += cases  # Add to the total cases
-            else:
-                print(f"Warning: UPC {upc} not found in counts dictionary.")
-        except (ValueError, IndexError) as e:
-            print(f"Error processing row {row}: {e}")
-
-    # Attempt to write total cases into F14 and verify assignment
+    # Write total cases into F14 and verify assignment
     source_ws['F14'] = str(total_cases)
     print(f"Assigned total_cases to F14: {source_ws['F14'].value}")
 

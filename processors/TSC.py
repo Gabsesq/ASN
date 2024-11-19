@@ -107,7 +107,7 @@ def convert_xls_data(uploaded_file, dest_file):
         qty_total = QTY_total(xls_sheet, 18 , 1)
         source_ws['E13'] = qty_total
         print(f"Total QTY placed in E13: {qty_total}")
-
+        source_ws['B13'] = qty_total
 
         source_wb.save(dest_file)
         print(f"Saved file successfully as {dest_file}")
