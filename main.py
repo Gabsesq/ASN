@@ -14,6 +14,7 @@ from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
 from processors.ScheelsLabel import process_ScheelsLabel
 from ExcelHelpers import resource_path, UPLOAD_FOLDER, FINISHED_FOLDER
+from processors.Chewy20 import process_Chewy20
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     print('running in a PyInstaller bundle')
@@ -39,49 +40,54 @@ def upload_form():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
-        return render_template('back.html', message='No file part'), 400
-
-    file = request.files['file']
     company = request.form.get('company')
 
-    if file.filename == '':
-        return render_template('back.html', message='No selected file'), 400
+    # Check for file uploads
+    asn_file = request.files.get('asn_file_1')
+    label_file = request.files.get('label_file')
 
-    if file:
-        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(file_path)
+    if not asn_file or (company == "Chewy20" and not label_file):
+        return render_template('back.html', message="Missing required files for processing."), 400
 
-        try:
-            processed_files = []  # Initialize an empty list for file paths
-            po_number = None       # Initialize PO number
+    # Save files locally
+    asn_file_path = os.path.join(UPLOAD_FOLDER, asn_file.filename)
+    asn_file.save(asn_file_path)
 
-            # Process files based on the company
-            if company == 'TSC':
-                # Only process one file for TSC
-                processed_file_path, po_number = process_TSC(file_path)
-                processed_files = [processed_file_path]  # Single file for TSC
-            else:
-                # Process two files for all other companies
-                asn_file_path, po_number = globals()[f"process_{company}ASN"](file_path)
-                label_file_path, _ = globals()[f"process_{company}Label"](file_path)
-                processed_files = [asn_file_path, label_file_path]
+    label_file_path = None
+    if label_file:
+        label_file_path = os.path.join(UPLOAD_FOLDER, label_file.filename)
+        label_file.save(label_file_path)
 
-            # Adjust paths for processed files to use resource_path
-            processed_files = [resource_path(file[0]) if isinstance(file, tuple) else resource_path(file) for file in processed_files]
+    try:
+        # Process based on company selection
+        if company == "Chewy20":
+            processed_file, po_number = process_Chewy20(asn_file_path, label_file_path)
+            processed_files = [processed_file]
+        elif company == "TSC":
+            processed_file, po_number = process_TSC(asn_file_path)
+            processed_files = [processed_file]
+        else:
+            asn_processor = globals().get(f"process_{company}ASN")
+            label_processor = globals().get(f"process_{company}Label")
+            if not asn_processor or not label_processor:
+                raise ValueError("Invalid company selected.")
+            asn_output, po_number = asn_processor(asn_file_path)
+            label_output, _ = label_processor(asn_file_path)
+            processed_files = [asn_output, label_output]
 
-            # Render success page with download links for processed files
-            return render_template(
-                'back.html',
-                message='File processed successfully!',
-                processed_files=processed_files,
-                company=company,
-                po_number=po_number  # Pass the PO number to the template
-            )
+        # Render success page with download links
+        return render_template(
+            'back.html',
+            message="Files processed successfully!",
+            processed_files=processed_files,
+            company=company,
+            po_number=po_number,
+        )
+    except Exception as e:
+        print(f"Error processing files: {e}")
+        return render_template('back.html', message=f"Error processing files: {str(e)}"), 500
 
-        except Exception as e:
-            print(f"Error: {e}")
-            return render_template('back.html', message=f'Error processing file: {str(e)}'), 500
+
 
 @app.route('/download/<path:file_path>')
 def download_file(file_path):

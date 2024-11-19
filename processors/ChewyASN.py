@@ -67,7 +67,7 @@ def convert_xls_data(uploaded_file, dest_file):
         source_ws[copy_cell] = value
 
     # Starting row in output sheet where data should be copied
-    output_row = 21
+    output_row = 20
     total_lines = 0
 
     # Loop through each item in the upload sheet
@@ -85,7 +85,7 @@ def convert_xls_data(uploaded_file, dest_file):
 
             # Repeat each field `qty` times in the output sheet
             for _ in range(qty):
-                source_ws[f'A{output_row}'] = output_row - 20  # Item No count (1, 2, 3, ...)
+                source_ws[f'A{output_row}'] = output_row - 19  # Item No count (1, 2, 3, ...)
                 source_ws[f'B{output_row}'] = qty  # QTY
                 source_ws[f'L{output_row}'] = description
                 source_ws[f'E{output_row}'] = upc14  # Placeholder for UPC if needed
@@ -98,16 +98,17 @@ def convert_xls_data(uploaded_file, dest_file):
             if total_lines > 10:
                 # Define data map for cases where QTY > 10
                 data_map = {
-                    'B13': 'SAIA',  # Adding word values directly
-                    'B16': 'SAIA',
-                    'E14': 'P',
+                    'B12': 'SAIA',  # Adding word values directly
+                    'B15': 'SAIA',
+                    'E13': 'P',
                 }
             else:
                 # Define data map for cases where QTY <= 10
                 data_map = {
-                    'B13': 'FEDG',
-                    'B16': 'Fedex',
-                    'E16': total_lines,
+                    'B12': 'FEDG',
+                    'B15': 'Fedex',
+                    'E15': total_lines,
+                    'E13': 'C',
                 }
 
             # Apply data mapping based on the condition
@@ -129,9 +130,9 @@ def convert_xls_data(uploaded_file, dest_file):
 
 
     # Use oneToMany for additional fields if required (example for C4, PO)
-    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=21, column_length=output_row - 21) #PO
-    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=21, column_length=output_row - 21) #PO Date
-    oneToMany(xls_sheet, source_ws, row=20, col=2, target_column='I', start_row=21, column_length=output_row - 21)
+    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=20, column_length=output_row - 20) #PO
+    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=20, column_length=output_row - 20) #PO Date
+    oneToMany(xls_sheet, source_ws, row=20, col=2, target_column='I', start_row=20, column_length=output_row - 20)
 
     format_cells_as_text(source_ws)
     align_cells_left(source_ws)
