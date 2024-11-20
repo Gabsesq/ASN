@@ -9,3 +9,8 @@ Think about asking for some info before processing.
     - This may entail splitting Labels and ASNs
 Saving and deleting files?
 Printing out files for user?
+
+
+FOR 20 DIGIT.
+    - wondering if its possible to save ASN's while app is open. So if you just upload a 20 digit, maybe it senses the customer name and the PO, it will
+      auto fill that ASN? reupload feels kind of clunky
