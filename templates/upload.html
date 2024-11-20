@@ -21,6 +21,7 @@
         <option value="TSC">TSC</option>
         <option value="PetSupermarket">PetSupermarket</option>
         <option value="Thrive">Thrive</option>
+        <option value="Thrive20">Thrive20</option>
         <option value="Murdochs">Murdochs</option>
         <option value="Scheels">Scheels</option>
     </select>
@@ -90,53 +91,59 @@
 
     // Show relevant upload sections based on company selection
     companySelect.addEventListener("change", () => {
-        const selectedCompany = companySelect.value;
-        asnUpload.style.display = selectedCompany ? "block" : "none";
-        labelUpload.style.display = selectedCompany === "Chewy20" ? "block" : "none";
-    });
+            const selectedCompany = companySelect.value;
 
-    // Prevent default drag behaviors
-    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
-        [asnDropArea, labelDropArea].forEach(area => {
-            area.addEventListener(eventName, preventDefaults, false);
+            // Always show ASN upload for any selection
+            asnUpload.style.display = selectedCompany ? "block" : "none";
+
+            // Show label upload only for Chewy20 and Thrive20
+            labelUpload.style.display = (selectedCompany === "Chewy20" || selectedCompany === "Thrive20") 
+                ? "block" 
+                : "none";
         });
-    });
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    // Highlight drop areas when dragging
-    ["dragenter", "dragover"].forEach(eventName => {
-        [asnDropArea, labelDropArea].forEach(area => {
-            area.addEventListener(eventName, () => area.classList.add("highlight"), false);
+        // Prevent default drag behaviors
+        ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+            [asnDropArea, labelDropArea].forEach(area => {
+                area.addEventListener(eventName, preventDefaults, false);
+            });
         });
-    });
 
-    ["dragleave", "drop"].forEach(eventName => {
-        [asnDropArea, labelDropArea].forEach(area => {
-            area.addEventListener(eventName, () => area.classList.remove("highlight"), false);
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop areas when dragging
+        ["dragenter", "dragover"].forEach(eventName => {
+            [asnDropArea, labelDropArea].forEach(area => {
+                area.addEventListener(eventName, () => area.classList.add("highlight"), false);
+            });
         });
-    });
 
-    // Handle file drop for ASN
-    asnDropArea.addEventListener("drop", e => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length > 0) asnFileInput.files = files;
-    });
+        ["dragleave", "drop"].forEach(eventName => {
+            [asnDropArea, labelDropArea].forEach(area => {
+                area.addEventListener(eventName, () => area.classList.remove("highlight"), false);
+            });
+        });
 
-    // Handle file drop for 20-digit label
-    labelDropArea.addEventListener("drop", e => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length > 0) labelFileInput.files = files;
-    });
+        // Handle file drop for ASN
+        asnDropArea.addEventListener("drop", e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) asnFileInput.files = files;
+        });
 
-    // Trigger file input on button click
-    browseButtonASN.addEventListener("click", () => asnFileInput.click());
-    browseButtonLabel.addEventListener("click", () => labelFileInput.click());
-</script>
+        // Handle file drop for 20-digit label
+        labelDropArea.addEventListener("drop", e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) labelFileInput.files = files;
+        });
+
+        // Trigger file input on button click
+        browseButtonASN.addEventListener("click", () => asnFileInput.click());
+        browseButtonLabel.addEventListener("click", () => labelFileInput.click());
+    </script>
 </body>
 </html>

@@ -15,6 +15,7 @@ from processors.ScheelsASN import process_ScheelsASN
 from processors.ScheelsLabel import process_ScheelsLabel
 from ExcelHelpers import resource_path, UPLOAD_FOLDER, FINISHED_FOLDER
 from processors.Chewy20 import process_Chewy20
+from processors.Thrive20 import process_Thrive20
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     print('running in a PyInstaller bundle')
@@ -46,7 +47,7 @@ def upload_file():
     asn_file = request.files.get('asn_file_1')
     label_file = request.files.get('label_file')
 
-    if not asn_file or (company == "Chewy20" and not label_file):
+    if not asn_file or (company in["Chewy20", "Thrive20"]  and not label_file):
         return render_template('back.html', message="Missing required files for processing."), 400
 
     # Save files locally
@@ -65,6 +66,9 @@ def upload_file():
             processed_files = [processed_file]
         elif company == "TSC":
             processed_file, po_number = process_TSC(asn_file_path)
+            processed_files = [processed_file]
+        elif company == "Thrive20":
+            processed_file, po_number = process_Thrive20(asn_file_path, label_file_path, FINISHED_FOLDER)
             processed_files = [processed_file]
         else:
             asn_processor = globals().get(f"process_{company}ASN")
