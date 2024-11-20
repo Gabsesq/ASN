@@ -59,34 +59,55 @@ def convert_xls_data(uploaded_file, dest_file):
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
 
-    # Copy data dynamically using helper functions
-    manyToMany(xls_sheet, source_ws, 17, 0, 'A', 19, get_column_length(xls_sheet, 17)) # Line number
-    oneToMany(xls_sheet, source_ws, 3, 2, 'B', 19, get_column_length(xls_sheet, 17)) # PO
-    oneToMany(xls_sheet, source_ws, 3, 7, 'C', 19, get_column_length(xls_sheet, 17)) # PO date
-    manyToMany(xls_sheet, source_ws, 17, 6, 'E', 19, get_column_length(xls_sheet, 17)) # vendor part
-    manyToMany(xls_sheet, source_ws, 17, 5, 'F', 19, get_column_length(xls_sheet, 17)) # UPC
-    manyToMany(xls_sheet, source_ws, 17, 1, 'G', 19, get_column_length(xls_sheet, 17)) # QTY NEED TO CHANGE
-    manyToMany(xls_sheet, source_ws, 17, 2, 'H', 19, get_column_length(xls_sheet, 17)) # UOM
-    manyToMany(xls_sheet, source_ws, 17, 7, 'I', 19, get_column_length(xls_sheet, 17)) # pack
-    manyToMany(xls_sheet, source_ws, 17, 4, 'J', 19, get_column_length(xls_sheet, 17)) # Description
+    
+    # Starting row in output sheet where data should be copied
+    output_row = 19  # Destination row start
+    item_start_row = 17  # Source row start for items in xls
+    total_lines = 0
 
- # Generate rows based on quantity and write them into the destination sheet
-    rows_to_write = generate_rows(xls_sheet, start_row=17, qty_column=6, column_count=xls_sheet.ncols)
+    print("Processing rows and duplicating based on QTY...")
 
-    print(f"Total rows generated: {len(rows_to_write)}")
+    # Loop through items in the source .xls sheet
+    while True:
+        try:
+            # Read QTY and other necessary fields
+            qty = int(xls_sheet.cell_value(item_start_row - 1, 1))  # Column B for QTY
+            po_number = xls_sheet.cell_value(3, 2)  # PO Number (row 3, column 2)
+            po_date = xls_sheet.cell_value(3, 7)  # PO Date (row 3, column 7)
+            vendor_part = xls_sheet.cell_value(item_start_row - 1, 6)  # Column F for Vendor Part
+            upc = xls_sheet.cell_value(item_start_row - 1, 5)  # Column E for UPC
+            description = xls_sheet.cell_value(item_start_row - 1, 4)  # Column H for Description
+            uom = xls_sheet.cell_value(item_start_row - 1, 2)  # Column C for UOM
 
-    # Write the generated rows into the destination worksheet
-    for i, row_data in enumerate(rows_to_write):
-        for j, value in enumerate(row_data):
-            source_ws.cell(row=19 + i, column=j + 1, value=value)
-            print(f"Wrote value '{value}' to cell ({19 + i}, {j + 1})")
+            # Duplicate rows based on QTY
+            for _ in range(qty):
+                source_ws[f'A{output_row}'] = output_row - 18  # Line number
+                source_ws[f'B{output_row}'] = po_number
+                source_ws[f'C{output_row}'] = po_date
+                source_ws[f'E{output_row}'] = upc
+                source_ws[f'F{output_row}'] = vendor_part
+                source_ws[f'G{output_row}'] = qty
+                source_ws[f'H{output_row}'] = uom
+                source_ws[f'J{output_row}'] = description
+                output_row += 1  # Move to the next row
 
+            total_lines += qty  # Increment total lines
+            item_start_row += 1  # Move to the next source row
 
-    total_qty = QTY_total(xls_sheet, 17, 1)
-    source_ws['F15'] = total_qty
+            # Stop if no more data is found in the QTY column
+            if not xls_sheet.cell_value(item_start_row - 1, 6):
+                break
 
+        except IndexError:
+            # Reached the end of the source sheet
+            break
+
+    # Write total QTY to a specific cell
+    print(f"Total QTY processed: {total_lines}")
+    source_ws['F15'] = total_lines
+
+    # Apply formatting
     format_cells_as_text(source_ws)
-    align_cells_left(source_ws)
     align_cells_left(source_ws)
 
     # Save the updated workbook
