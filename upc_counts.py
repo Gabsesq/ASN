@@ -1,6 +1,7 @@
 # upc_counts.py
 
 counts = {
+    # EDI Products
     "850016364883": 24,  # Edi-HJ-PB-LRG
     "850016364913": 24,  # Edi-DR-SP-LRG
     "864178000275": 24,  # Edi-DR-BC-LRG
@@ -10,24 +11,40 @@ counts = {
     "850016364906": 24,  # Edi-DR-SP-SML
     "850016364968": 40,  # TS-Edi-HJ-PB
     "850016364944": 40,  # TS-Edi-STRESS-P
+    "850016364951": 40,  # TS-Edi-STRESS-P
+    "850016364821": 24,  # EDI-STRESS-PEPP-LRG
+    "850016364838": 24,  # EDI-STRESS-PB-SML
+    "850016364845": 24,  # EDI-STRESS-PEPP-SML
+    "850016364852": 24,  # EDI-STRESS-PB-LRG
+    "850016364869": 12,  # EDI-STRESS-PB-FAM
+
+    # Products Starting with Numbers
     "860008203465": 30,  # 300-HJR-HO
     "860008203441": 30,  # 300-SR-HO
     "860008203458": 30,  # 600-SR-HO
     "860008203472": 30,  # 600-HJR-HO
-    "850016364951": 40,  # TS-Edi-STRESS-P
     "860008221988": 30,  # 180-CAT-SR
     "860009592575": 40,  # 150-Mini-Stress
-    "860009592551": 30,  # Omega-Alg
-    "860009592568": 30,  # Post-Bio-GH
-    "850016364821": 24,  # EDI-STRESS-P
-    "850016364838": 24,  # EDI-STRESS-P
-    "850016364845": 24,  # EDI-STRESS-P
-    "850016364852": 24,  # EDI-STRESS-P
-    "850016364869": 12,  # EDI-STRESS-PB-FAM
-    "850016364951": 40,  # TS-EDI-STRES
     "860008203403": 30,  # 100-DR-HO
-    "860008876713": 6,  # ITCHYDRY-SK
-    "860008876744": 6,  # 2IN1-SK-CT
+    "860008876744": 6,   # 2IN1-SK-CT
+
+    # Other Products
+    "860009592568": 30,  # Post-Bio-GH: POST-BIO-GH
+    "860009592551": 30,  # Omega-Alg: OMEGA-ALG
+    "860008203410": 30,  # 200-DR-HO
+    "860008203427": 30,  # 500-DR-HO
+    "860008203434": 30,  # 750-DR-HO
+    "860008876775": 30,  # 100-Lipe-Ultra: 100-LIPE-ULTRA
+    "860008876768": 30,  # 300-Lipe-Ultra: 300-LIPE-ULTRA
+    "860009592513": 30,  # 600-Lipe-Ultra: 600-LIPE-ULTRA
+    "861109000304": 18,  # CAP450: 450 CAP
+    "850016364586": 18,  # SNT30: SNT30
+    "860009592537": 6,  # TS-Itchy-Dry-Shampoo: TS-Itchy & Dry Shampoo
+    "860009592520": 6,  # Itchy-Dry-Shampoo-Gallon: ITCHY-DRY SHAMPOO-GALLON
+    "860008876720": 6,  # Sensitive-SK-CT: SENSITIVE SK-CT
+    "860008876737": 6,  # Conditioner-SK-CT: CONDITIONER SK-CT
+    "860009592544": 40,  # TS-2in1-Shampoo: TS-2 IN 1 SHAMPOO
+    "860008221971": 30,  # SK-PW-RL: SK-PW-RL
 }
 
 def calculate_total_cases(sheet, start_row=15, upc_col=5, qty_col=1):
