@@ -56,13 +56,13 @@ def convert_xls_data(uploaded_file, dest_file):
     
     # Mapping uploaded cells to copy cells
     data_map = {
-        (12, 1): 'G3',  # name
-        (12, 3): 'G4',   # number
-        (12, 4): 'G5',   # add 1
-        (12, 7): 'G6',   # add 2
-        (12, 9): 'G7',  # city
-        (12, 10): 'G8',  # State
-        (12, 11): 'G9',  # Zip
+        (12, 1): 'E3',  # name
+        (12, 3): 'E4',   # number
+        (12, 4): 'E5',   # add 1
+        (12, 7): 'E6',   # add 2
+        (12, 9): 'E7',  # city
+        (12, 10): 'E8',  # State
+        (12, 11): 'E9',  # Zip
     }
     
 

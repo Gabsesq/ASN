@@ -5,6 +5,7 @@ import os
 from ExcelHelpers import (
     get_column_length, resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
+from upc_counts import counts  # Add this import at the top
 
 # Define source files and destination copies for Chewy
 source_asn_xlsx = resource_path("assets\Scheels\Blank Scheels UCC128 Label Request.xlsx")
@@ -85,6 +86,27 @@ def convert_xls_data(uploaded_file, dest_file):
     typedValue(source_ws=source_ws, static_value="NA", target_column='H', start_row=14, column_length=column_length) #Mark For
 
     manyToMany(xls_sheet=xls_sheet, source_ws=source_ws, start_row=17, start_col=5, dest_col='G', dest_start_row=14, column_length=column_length)  # UPC  
+
+    # Calculate and add label counts
+    for i in range(column_length):
+        try:
+            # Get UPC and QTY from input file
+            upc = str(int(xls_sheet.cell_value(16 + i, 5)))  # Column F (5), starting row 17
+            qty = int(xls_sheet.cell_value(16 + i, 1))       # Column B (1)
+            
+            # Look up items per case and calculate labels needed
+            if upc in counts:
+                items_per_case = counts[upc]
+                labels_needed = qty // items_per_case
+                # Put result in column I
+                source_ws[f'I{14 + i}'] = labels_needed
+                print(f"UPC {upc}: QTY {qty} / {items_per_case} items per case = {labels_needed} labels")
+            else:
+                print(f"Warning: UPC {upc} not found in counts dictionary")
+                source_ws[f'I{14 + i}'] = "UPC not found"
+        except Exception as e:
+            print(f"Error processing row {i}: {str(e)}")
+            source_ws[f'I{14 + i}'] = "Error"
 
     format_cells_as_text(source_ws)
     align_cells_left(source_ws)
