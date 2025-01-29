@@ -50,8 +50,8 @@ def convert_xls_data(uploaded_file, dest_file):
 
     # Define your data maps
     data_map = {
-        (12, 1): 'G3', (12, 3): 'G4', (12, 4): 'G5',
-        (12, 7): 'G6', (12, 9): 'G7', (12, 10): 'G8', (12, 11): 'G9',
+        (11, 1): 'E4', (11, 3): 'E5', (11, 4):'E6',
+        (11, 9): 'E7', (11, 10): 'E8', (11, 11): 'E9',
     }
 
 
@@ -76,6 +76,7 @@ def convert_xls_data(uploaded_file, dest_file):
             po_date = xls_sheet.cell_value(3, 7)  # PO Date (row 3, column 7)
             vendor_part = xls_sheet.cell_value(item_start_row - 1, 6)  # Column F for Vendor Part
             upc = xls_sheet.cell_value(item_start_row - 1, 5)  # Column E for UPC
+            pack = xls_sheet.cell_value(item_start_row - 1, 7)  # Column I for Pack
             description = xls_sheet.cell_value(item_start_row - 1, 4)  # Column H for Description
             uom = xls_sheet.cell_value(item_start_row - 1, 2)  # Column C for UOM
 
@@ -84,10 +85,11 @@ def convert_xls_data(uploaded_file, dest_file):
                 source_ws[f'A{output_row}'] = output_row - 18  # Line number
                 source_ws[f'B{output_row}'] = po_number
                 source_ws[f'C{output_row}'] = po_date
-                source_ws[f'E{output_row}'] = upc
-                source_ws[f'F{output_row}'] = vendor_part
-                source_ws[f'G{output_row}'] = qty
+                source_ws[f'F{output_row}'] = upc
+                source_ws[f'E{output_row}'] = vendor_part
+                source_ws[f'G{output_row}'] = "1"
                 source_ws[f'H{output_row}'] = uom
+                source_ws[f'I{output_row}'] = pack
                 source_ws[f'J{output_row}'] = description
                 output_row += 1  # Move to the next row
 

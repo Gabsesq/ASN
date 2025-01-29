@@ -57,12 +57,12 @@ def convert_xls_data(uploaded_file, dest_file):
 
     # Mapping uploaded cells to copy cells
     data_map = {
-        (12, 1): 'F3',   # Name
-        (12, 4): 'F4',   # Address 1
-        (12, 7): 'F5',   # Address 2
-        (12, 9): 'F6',   # City
-        (12, 10): 'F7',  # State
-        (12, 11): 'F8',  # Zip
+        (11, 1): 'F3',   # Name
+        (11, 4): 'F4',   # Address 1
+        (11, 7): 'F5',   # Address 2
+        (11, 9): 'F6',   # City
+        (11, 10): 'F7',  # State
+        (11, 11): 'F8',  # Zip
     }
 
     for (row, col), copy_cell in data_map.items():
