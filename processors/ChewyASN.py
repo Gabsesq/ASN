@@ -59,7 +59,7 @@ def convert_xls_data(uploaded_file, dest_file):
     data_map = {
         (15, 1): 'E4', (15, 3): 'E5', (15, 4): 'E6',
         (15, 9): 'E7', (15, 10): 'E8', (15, 11): 'E9',
-        (7, 2): 'E15'
+        (7, 2): 'E14'
     }
 
     for (row, col), copy_cell in data_map.items():

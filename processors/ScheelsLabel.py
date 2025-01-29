@@ -7,7 +7,7 @@ from ExcelHelpers import (
 )
 
 # Define source files and destination copies for Chewy
-source_asn_xlsx = resource_path("assets/Murdochs/Blank Murdochs UCC128 Label Request.xlsx")
+source_asn_xlsx = resource_path("assets\Scheels\Blank Scheels UCC128 Label Request.xlsx")
 
 # Function to copy data from uploaded .xlsx file to specific cells in the ASN .xlsx backup
 def copy_xlsx_data(uploaded_file, dest_file):
@@ -55,6 +55,7 @@ def convert_xls_data(uploaded_file, dest_file):
     xls_sheet = xls_book.sheet_by_index(0)
     format_cells_as_text(source_ws)
     align_cells_left(source_ws)
+    
     # Mapping uploaded cells to copy cells
     data_map = {
         (12, 1): 'F3',   # 'B18' -> (18, 2) name
@@ -65,32 +66,37 @@ def convert_xls_data(uploaded_file, dest_file):
         (12, 11): 'F8',  # 'L18' -> (18, 12) Zip
     }
     
-
+    # Process the data map first
     for (row, col), copy_cell in data_map.items():
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
 
-        # Dynamic column length calculation with boundary check
-        start_row = 17
-        column_length = get_column_length(xls_sheet, start_row)
-        print("Final Column Length:", column_length)  # Confirm calculated column length
+    # Dynamic column length calculation with boundary check
+    start_row = 17
+    column_length = get_column_length(xls_sheet, start_row)
+    print("Final Column Length:", column_length)  # Confirm calculated column length
 
-        oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=3, col=2, target_column='A', start_row=14, column_length=column_length) #PO
-        oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=12, col=11, target_column='B', start_row=14, column_length=column_length) #Zip Code
-        manyToMany(xls_sheet, source_ws, 17, 6, 'F', 14, column_length)  # Buyer/Vendor part?
-        manyToMany(xls_sheet, source_ws, 17, 1, 'G', 14, column_length)  # QTY  
+    # Now process all the repeated data outside the loop
+    oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=3, col=2, target_column='A', start_row=14, column_length=column_length) #PO
+    oneToMany(xls_sheet=xls_sheet, source_ws=source_ws, row=12, col=11, target_column='B', start_row=14, column_length=column_length) #Zip Code
+    
+    typedValue(source_ws=source_ws, static_value="UPS", target_column='C', start_row=14, column_length=column_length) #UPS
+    typedValue(source_ws=source_ws, static_value="NA", target_column='F', start_row=14, column_length=column_length) #Special Number
+    typedValue(source_ws=source_ws, static_value="NA", target_column='H', start_row=14, column_length=column_length) #Mark For
 
-        format_cells_as_text(source_ws)
-        align_cells_left(source_ws)
-        align_cells_left(source_ws)
+    manyToMany(xls_sheet=xls_sheet, source_ws=source_ws, start_row=17, start_col=5, dest_col='G', dest_start_row=14, column_length=column_length)  # UPC  
 
-        # Save the updated file
-        try:
-            source_wb.save(dest_file)
-            print(f"File saved successfully as {dest_file}.")
-        except Exception as e:
-            print(f"Error saving file: {str(e)}")
-        print("column length ", column_length)
+    format_cells_as_text(source_ws)
+    align_cells_left(source_ws)
+    align_cells_left(source_ws)
+
+    # Save the updated file
+    try:
+        source_wb.save(dest_file)
+        print(f"File saved successfully as {dest_file}.")
+    except Exception as e:
+        print(f"Error saving file: {str(e)}")
+    print("column length ", column_length)
 
 
 

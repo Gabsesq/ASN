@@ -5,6 +5,7 @@ import os
 from ExcelHelpers import (
     resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
+from upc_counts import counts  # Import the UPC counts dictionary
 
 # Define source files and destination copies for Chewy
 source_asn_xlsx = resource_path("assets/Murdochs/Blank Murdochs UCC128 Label Request.xlsx")
@@ -78,69 +79,48 @@ def convert_xls_data(uploaded_file, dest_file):
             print(f"Error: Not enough rows to start processing from row 23.")
             return
 
-        # Dynamic column length calculation with boundary check
-        row = 23
-        column_length = 0
-
-        while row < total_rows:  # Ensure we don't exceed the available rows
+        # Count total number of data rows (looking for non-empty values in column A starting from row 23)
+        data_rows = 0
+        for row_idx in range(22, xls_sheet.nrows):  # Start from index 22 (row 23)
             try:
-                value = xls_sheet.cell_value(row - 1, 0)  # Column A (index 0)
-                print(f"Row {row}: Value in A = {value}")
-
-                if value:
-                    column_length += 1
-                    row += 1
-                else:
-                    break  # Stop if an empty cell is found
-            except IndexError as e:
-                print(f"Error accessing row {row - 1}, column 0: {str(e)}")
+                value = xls_sheet.cell_value(row_idx, 0)  # Column A (index 0)
+                if value != '':  # Check for any non-empty value
+                    data_rows += 1
+            except IndexError:
                 break
+        
+        print(f"Total data rows found: {data_rows}")
 
-        print(f"Dynamic Length of Column A: {column_length}")
+        # Function to calculate cases based on UPC and quantity
+        def calculate_cases(upc, qty):
+            if upc in counts:
+                items_per_case = counts[upc]
+                return qty // items_per_case  # Integer division to get whole cases
+            print(f"Warning: UPC {upc} not found in counts dictionary")
+            return 0
 
-        # Use helper function safely with boundary checks
         try:
-            if column_length > 0:
-                manyToMany(xls_sheet, source_ws, 23, 6, 'F', 14, column_length)  # A23 to A19       Part number
-                # manyToMany(xls_sheet, source_ws, 23, 1, 'G', 14, column_length)  # B23 to I19       QTY
-                # manyToMany(xls_sheet, source_ws, 23, 1, 'H', 14, column_length)  # B23 to I19       QTY
+            if data_rows > 0:
+                # Copy existing data
+                manyToMany(xls_sheet, source_ws, 23, 6, 'F', 14, data_rows)  # Vendor Part number
+                oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='A', start_row=14, column_length=data_rows)  # PO
+                oneToMany(xls_sheet, source_ws, row=17, col=11, target_column='B', start_row=14, column_length=data_rows)  # Zip
+                typedValue(source_ws, static_value="Fed Ex", target_column='C', start_row=14, column_length=data_rows)
+
+                # Calculate and fill in case quantities
+                for i in range(data_rows):
+                    row_idx = i + 22  # Starting from row 23 (index 22)
+                    qty = int(xls_sheet.cell_value(row_idx, 1))  # Column B (QTY)
+                    upc = str(int(xls_sheet.cell_value(row_idx, 5)))  # Column F (UPC)
+                    cases = calculate_cases(upc, qty)
+                    source_ws[f'H{14 + i}'] = cases  # Write cases to column H
+                    print(f"Row {row_idx + 1}: UPC {upc}, QTY {qty}, Cases {cases}")
 
             else:
                 print("No data found in column A starting from row 23.")
         except Exception as e:
             print(f"Error during copy operations: {str(e)}")
 
-                # 1. Copy the value from 'C4' to 'B19' and down for column_length rows
-        oneToMany(
-            xls_sheet=xls_sheet,
-            source_ws=source_ws,
-            row=3,  # 'C4' -> row 4 in zero-based index
-            col=2,  # 'C4' -> column 3 in zero-based index
-            target_column='A',  # Paste into column B
-            start_row=14,  # Start from row 19
-            column_length=column_length,  # Loop for the determined length
-        )
-
-        # 2. Copy the value from 'H4' to 'C19' and down for column_length rows
-        oneToMany(
-            xls_sheet=xls_sheet,
-            source_ws=source_ws,
-            row=17,  # 'L18' -> row 4 in zero-based index
-            col=11,  # 'L18' -> column 8 in zero-based index
-            target_column='B',  # Paste into column C
-            start_row=14,  # Start from row 19
-            column_length=column_length,  # Loop for the determined length
-        )
-
-
-        # 3. Paste static value "N/A" into 'D19' and down
-        typedValue(
-            source_ws=source_ws,
-            static_value="Fed Ex",  # Static value
-            target_column='C',
-            start_row=14,
-            column_length=column_length
-        )
         format_cells_as_text(source_ws)
         align_cells_left(source_ws)
         align_cells_left(source_ws)

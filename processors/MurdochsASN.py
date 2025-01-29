@@ -69,12 +69,12 @@ def convert_xls_data(uploaded_file, dest_file):
 
     # Mapping uploaded cells to copy cells
     data_map = {
-        (17, 1): 'E3',   # 'B18' -> (18, 2) name
-        (17, 3): 'E4',   # 'D18' -> (18, 4) number
-        (17, 4): 'E5',   # 'E18' -> (18, 5) add 1
-        (17, 9): 'E6',   # 'J18' -> (18, 10) city
-        (17, 10): 'E7',  # 'K18' -> (18, 11) State
-        (17, 11): 'E8',  # 'L18' -> (18, 12) Zip
+        (17, 1): 'E4',   # 'B18' -> (18, 2) name
+        (17, 3): 'E5',   # 'D18' -> (18, 4) number
+        (17, 4): 'E6',   # 'E18' -> (18, 5) add 1
+        (17, 9): 'E7',   # 'J18' -> (18, 10) city
+        (17, 10): 'E8',  # 'K18' -> (18, 11) State
+        (17, 11): 'E9',  # 'L18' -> (18, 12) Zip
         (9, 2): 'E14'    # 'C10' -> (10, 3) delivery date
     }
 
@@ -97,47 +97,40 @@ def convert_xls_data(uploaded_file, dest_file):
         print(f"Error: Not enough rows to start processing from row 23.")
         return
 
-    # Dynamic column length calculation with boundary check
-    row = 23
-    column_length = 0
-
-    while row < total_rows:  # Ensure we don't exceed the available rows
+    # Count total number of data rows (looking for non-empty values in column A starting from row 23)
+    data_rows = 0
+    for row_idx in range(22, xls_sheet.nrows):  # Start from index 22 (row 23)
         try:
-            value = xls_sheet.cell_value(row - 1, 0)  # Column A (index 0)
-            print(f"Row {row}: Value in A = {value}")
-
-            if value:
-                column_length += 1
-                row += 1
-            else:
-                break  # Stop if an empty cell is found
-        except IndexError as e:
-            print(f"Error accessing row {row - 1}, column 0: {str(e)}")
+            value = xls_sheet.cell_value(row_idx, 0)  # Column A (index 0)
+            if value != '':  # Check for any non-empty value
+                data_rows += 1
+        except IndexError:
             break
-
-    print(f"Dynamic Length of Column A: {column_length}")
-
+    
+    print(f"Total data rows found: {data_rows}")
+    
     # Use helper function safely with boundary checks
     try:
-        if column_length > 0:
-            manyToMany(xls_sheet, source_ws, 23, 0, 'A', 19, column_length)  # A23 to A19       Item number
-            manyToMany(xls_sheet, source_ws, 23, 5, 'F', 19, column_length)  # F23 to F19       UPC
-            manyToMany(xls_sheet, source_ws, 23, 8, 'G', 19, column_length)  # I23 to G19       SKU
-            manyToMany(xls_sheet, source_ws, 23, 6, 'H', 19, column_length)  # G23 to H19       Vendor Part
-            manyToMany(xls_sheet, source_ws, 23, 1, 'I', 19, column_length)  # B23 to I19       QTY
-            manyToMany(xls_sheet, source_ws, 23, 2, 'J', 19, column_length)  # C23 to J19       Unit of Measure
-            manyToMany(xls_sheet, source_ws, 23, 4, 'K', 19, column_length)  # E23 to K19 I 23  Description
+        if data_rows > 0:
+            manyToMany(xls_sheet, source_ws, 23, 0, 'A', 19, data_rows)  # A23 to A19       Item number
+            manyToMany(xls_sheet, source_ws, 23, 5, 'F', 19, data_rows)  # F23 to F19       UPC
+            manyToMany(xls_sheet, source_ws, 23, 8, 'G', 19, data_rows)  # I23 to G19       SKU
+            manyToMany(xls_sheet, source_ws, 23, 6, 'H', 19, data_rows)  # G23 to H19       Vendor Part
+            manyToMany(xls_sheet, source_ws, 23, 1, 'I', 19, data_rows)  # B23 to I19       QTY
+            manyToMany(xls_sheet, source_ws, 23, 2, 'J', 19, data_rows)  # C23 to J19       Unit of Measure
+            manyToMany(xls_sheet, source_ws, 23, 4, 'K', 19, data_rows)  # E23 to K19       Description
         else:
             print("No data found in column A starting from row 23.")
     except Exception as e:
         print(f"Error during copy operations: {str(e)}")
 
     # Additional copy and paste operations with helper functions
-    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=19, column_length=column_length)  # PO
-    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=19, column_length=column_length)  # PO Date
+    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=19, column_length=data_rows)  # PO
+    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=19, column_length=data_rows)  # PO Date
 
-    typedValue(source_ws, static_value="N/A", target_column='D', start_row=19, column_length=column_length)
+    typedValue(source_ws, static_value="NA", target_column='D', start_row=19, column_length=data_rows)
 
+    format_cells_as_text(source_ws)
     format_cells_as_text(source_ws)
     align_cells_left(source_ws)
     align_cells_left(source_ws)
@@ -153,7 +146,6 @@ def convert_xls_data(uploaded_file, dest_file):
 def process_MurdochsASN(file_path):
     """Main function to process Murdochs ASN files."""
     current_date = datetime.datetime.now().strftime("%m.%d.%Y")
-
     # Determine if the file is XLSX or XLS and extract the PO number
     if file_path.endswith('.xlsx'):
         uploaded_wb = load_workbook(file_path)

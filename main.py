@@ -5,6 +5,7 @@ import webbrowser
 from processors.ChewyASN import process_ChewyASN
 from processors.ChewyLabel import process_ChewyLabel
 from processors.TSC import process_TSC
+from processors.TSCISASN import process_TSCIS as process_TSCISASN
 from processors.PetSupermarketASN import process_PetSupermarketASN
 from processors.PetSupermarketLabel import process_PetSupermarketLabel
 from processors.ThriveASN import process_ThriveASN
@@ -34,6 +35,11 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 if not os.path.exists(FINISHED_FOLDER):
     os.makedirs(FINISHED_FOLDER)
+
+# Create TSCIS folder in Finished directory
+tscis_folder = os.path.join(FINISHED_FOLDER, 'TSCIS')
+if not os.path.exists(tscis_folder):
+    os.makedirs(tscis_folder)
 
 @app.route('/')
 def upload_form():
@@ -66,6 +72,9 @@ def upload_file():
             processed_files = [processed_file]
         elif company == "TSC":
             processed_file, po_number = process_TSC(asn_file_path)
+            processed_files = [processed_file]
+        elif company == "TSCIS":
+            processed_file, po_number = process_TSCISASN(asn_file_path)
             processed_files = [processed_file]
         elif company == "Thrive20":
             processed_file, po_number = process_Thrive20(asn_file_path, label_file_path, FINISHED_FOLDER)
@@ -113,7 +122,7 @@ def shutdown():
     return 'Server shutting down...'
 
 if __name__ == '__main__':
-    # Automatically open the default web browser to the Flask app’s URL
+    # Automatically open the default web browser to the Flask app's URL
     port = 5000  # Set your preferred port if needed
     url = f"http://127.0.0.1:{port}"
     webbrowser.open(url)  # Open the browser to this URL
