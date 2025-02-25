@@ -93,7 +93,7 @@ def convert_xls_data(uploaded_file, dest_file):
         value = xls_sheet.cell_value(row, col)
         source_ws[copy_cell] = value
 
-    if QTY_total < 11:
+    if QTY_total < 15:
         # Track numbers from A21 and below, copy to A20 in the copy
         row = 21
         copy_row = 14
@@ -154,8 +154,8 @@ def convert_xls_data(uploaded_file, dest_file):
             source_ws['H14'] = "mixed"
             source_ws['I14'] = "mixed"
             source_ws['J14'] = "NA"
-            source_ws['K14'] = 1
-            source_ws['L14'] = "mixed"
+            source_ws['K14'] = "NA"
+            source_ws['L14'] = 1
             source_ws['M14'] = 1
 
             # Debugging print statements for the static values
