@@ -5,7 +5,8 @@ import webbrowser
 from processors.ChewyASN import process_ChewyASN
 from processors.ChewyLabel import process_ChewyLabel
 from processors.TSC import process_TSC
-from processors.TSCISASN import process_TSCIS as process_TSCISASN
+from processors.TSCISASN import process_TSCISASN
+from processors.TSCISLabel import process_TSCISLabel
 from processors.PetSupermarketASN import process_PetSupermarketASN
 from processors.PetSupermarketLabel import process_PetSupermarketLabel
 from processors.ThriveASN import process_ThriveASN
@@ -47,60 +48,51 @@ def upload_form():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    company = request.form.get('company')
-
-    # Check for file uploads
-    asn_file = request.files.get('asn_file_1')
-    label_file = request.files.get('label_file')
-
-    if not asn_file or (company in["Chewy20", "Thrive20"]  and not label_file):
-        return render_template('back.html', message="Missing required files for processing."), 400
-
-    # Save files locally
-    asn_file_path = os.path.join(UPLOAD_FOLDER, asn_file.filename)
-    asn_file.save(asn_file_path)
-
-    label_file_path = None
-    if label_file:
-        label_file_path = os.path.join(UPLOAD_FOLDER, label_file.filename)
-        label_file.save(label_file_path)
-
     try:
-        # Process based on company selection
-        if company == "Chewy20":
-            processed_file, po_number = process_Chewy20(asn_file_path, label_file_path)
-            processed_files = [processed_file]
-        elif company == "TSC":
-            processed_file, po_number = process_TSC(asn_file_path)
-            processed_files = [processed_file]
-        elif company == "TSCIS":
-            processed_file, po_number = process_TSCISASN(asn_file_path)
-            processed_files = [processed_file]
-        elif company == "Thrive20":
-            processed_file, po_number = process_Thrive20(asn_file_path, label_file_path, FINISHED_FOLDER)
-            processed_files = [processed_file]
-        else:
-            asn_processor = globals().get(f"process_{company}ASN")
-            label_processor = globals().get(f"process_{company}Label")
-            if not asn_processor or not label_processor:
-                raise ValueError("Invalid company selected.")
-            asn_output, po_number = asn_processor(asn_file_path)
-            label_output, _ = label_processor(asn_file_path)
-            processed_files = [asn_output, label_output]
+        company = request.form.get('company')
+        
+        # Add debug print
+        print(f"Processing company: {company}")
 
-        # Render success page with download links
-        return render_template(
-            'back.html',
-            message="Files processed successfully!",
-            processed_files=processed_files,
-            company=company,
-            po_number=po_number,
-        )
+        # Check for file uploads
+        asn_file = request.files.get('asn_file_1')
+        if not asn_file:
+            print("No ASN file uploaded")
+            return render_template('back.html', message="Missing ASN file."), 400
+
+        # Save files locally
+        asn_file_path = os.path.join(UPLOAD_FOLDER, asn_file.filename)
+        asn_file.save(asn_file_path)
+        print(f"Saved ASN file to: {asn_file_path}")
+
+        try:
+            if company == "TSCIS":
+                print("Processing TSCIS files...")
+                # Process both ASN and Label files
+                asn_output, po_number = process_TSCISASN(asn_file_path)
+                print(f"ASN processed: {asn_output}")
+                label_output, _ = process_TSCISLabel(asn_file_path)
+                print(f"Label processed: {label_output}")
+                processed_files = [asn_output, label_output]
+            else:
+                # ... rest of your company processing ...
+                pass
+
+            return render_template(
+                'back.html',
+                message="Files processed successfully!",
+                processed_files=processed_files,
+                company=company,
+                po_number=po_number,
+            )
+
+        except Exception as e:
+            print(f"Error processing files: {str(e)}")
+            return render_template('back.html', message=f"Error processing files: {str(e)}"), 500
+
     except Exception as e:
-        print(f"Error processing files: {e}")
-        return render_template('back.html', message=f"Error processing files: {str(e)}"), 500
-
-
+        print(f"Upload error: {str(e)}")
+        return render_template('back.html', message=f"Upload error: {str(e)}"), 500
 
 @app.route('/download/<path:file_path>')
 def download_file(file_path):

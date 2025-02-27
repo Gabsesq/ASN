@@ -95,7 +95,7 @@ def convert_xls_data(uploaded_file, dest_file):
                 output_row += 1  # Move to the next row in the output sheet
 
                                 # Conditional logic based on QTY value
-            if total_lines > 10:
+            if total_lines > 15:
                 # Define data map for cases where QTY > 10
                 data_map = {
                     'B12': 'SAIA',  # Adding word values directly

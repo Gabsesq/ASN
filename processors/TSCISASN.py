@@ -7,17 +7,19 @@ import tempfile
 from ExcelHelpers import (
     QTY_total, resource_path, oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length, FINISHED_FOLDER
 )
+from upc_counts import counts  # Add this import
 
 
 
 # Define source file for TSC IS
 source_asn_xls = resource_path("assets/TSCIS/Master Template Tractor Supply IS ASN.xlsx")
 
-# Check if the file exists
+# Add debug print
+print(f"Looking for template at: {source_asn_xls}")
 if not os.path.exists(source_asn_xls):
-    print("File does not exist at:", source_asn_xls)
+    print(f"WARNING: Template file not found at {source_asn_xls}")
 else:
-    print("File found at:", source_asn_xls)
+    print(f"Template file found at {source_asn_xls}")
 
 
 # Function to copy data from uploaded .xlsx file to the ASN .xlsx backup
@@ -69,22 +71,23 @@ def copy_xlsx_data(uploaded_file, dest_file):
 # Function to convert and copy data from .xls files
 def convert_xls_data(uploaded_file, dest_file):
     try:
-        # Create a new workbook from the template
         source_wb = load_workbook(source_asn_xls)
         source_ws = source_wb.active
         
-        # Read the uploaded file using xlrd
         xls_book = xlrd.open_workbook(uploaded_file)
         xls_sheet = xls_book.sheet_by_index(0)
 
         format_cells_as_text(source_ws)
         align_cells_left(source_ws)
 
+        # Debug print to see sheet dimensions
+        print(f"Sheet dimensions: rows={xls_sheet.nrows}, cols={xls_sheet.ncols}")
+
         # Mapping uploaded cells to copy cells with error handling
         data_map = {
-            (13, 1): 'E3', (13, 3): 'E4', (13, 4): 'E5',
-            (13, 9): 'E6', (13, 10): 'E7', (13, 11): 'E8',
-            (8, 2): 'B11', (6,2) : 'E11'
+            (13, 1): 'E4', (13, 3): 'E5', (13, 4): 'E6',
+            (13, 9): 'E7', (13, 10): 'E8', (13, 11): 'E9',
+            (6,2) : 'E11'
         }
         
         for (row, col), copy_cell in data_map.items():
@@ -97,25 +100,66 @@ def convert_xls_data(uploaded_file, dest_file):
             except Exception as e:
                 print(f"Unexpected error copying ({row}, {col}) to {copy_cell}: {str(e)}")
 
-        # Calculate dynamic column length starting from A17
-        column_length = get_column_length(xls_sheet, start_row=17)
-        print(f"Column length calculated: {column_length}")
+        # Starting row in output sheet where data should be copied
+        output_row = 17
+        total_lines = 0
 
-        # Perform many-to-many copy operations with debugging
-        manyToMany(xls_sheet, source_ws, 18, 0, 'A', 17, column_length)  # Item No
-        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length-1)  # Copy 'C4' to 'B17'
-        manyToMany(xls_sheet, source_ws, 18, 4, 'D', 17, column_length)  # UPS
-        manyToMany(xls_sheet, source_ws, 18, 5, 'E', 17, column_length)  # Buyer Part
-        manyToMany(xls_sheet, source_ws, 18, 6, 'F', 17, column_length)  # Vendor Part
-        manyToMany(xls_sheet, source_ws, 18, 1, 'G', 17, column_length)  # QTY
-        manyToMany(xls_sheet, source_ws, 18, 2, 'H', 17, column_length)  # UOM
-        manyToMany(xls_sheet, source_ws, 18, 8, 'I', 17, column_length)  # Description
+        # Loop through each item in the upload sheet - starting at row 1 (after header)
+        item_start_row = 17  # Changed from 17 to 1 to match your XLS sheet
+        while True:
+            try:
+                # Read QTY and UPC from the upload sheet
+                qty = int(float(xls_sheet.cell_value(item_start_row, 1)))  # Column B (QTY)
+                upc = str(int(xls_sheet.cell_value(item_start_row, 4)))  # Column E (UPC)
+                description = xls_sheet.cell_value(item_start_row, 7)  # Column H (Description)
+                vendor_part = xls_sheet.cell_value(item_start_row, 6)  # Column G (Vendor Part)
+                buyer_part = xls_sheet.cell_value(item_start_row, 5)  # Column F (Buyer Part)
+                uom = xls_sheet.cell_value(item_start_row, 2)  # Column C (UOM)
 
-        # Sum the QTY values and place the total
-        qty_total = QTY_total(xls_sheet, 18, 1)
-        source_ws['E13'] = qty_total
-        source_ws['B13'] = qty_total
-        print(f"Total QTY placed in E13 and B13: {qty_total}")
+                print(f"Processing row {item_start_row}: QTY={qty}, UPC={upc}")  # Debug print
+
+                # Look up UPC in counts dictionary
+                if upc in counts:
+                    items_per_case = counts[upc]
+                    num_cases = qty // items_per_case
+                    total_lines += num_cases
+                    print(f"UPC {upc}: {qty} items ÷ {items_per_case} = {num_cases} cases")
+
+                    # Create a row for each case
+                    for case_num in range(num_cases):
+                        source_ws[f'A{output_row}'] = output_row - 16  # Line number
+                        source_ws[f'B{output_row}'] = xls_sheet.cell_value(3, 2)  # PO Number
+                        source_ws[f'D{output_row}'] = "NA"  # Description
+                        source_ws[f'E{output_row}'] = upc  # UPC
+                        source_ws[f'F{output_row}'] = buyer_part  # Buyer Part
+                        source_ws[f'G{output_row}'] = vendor_part  # Vendor Part
+                        source_ws[f'H{output_row}'] = items_per_case  # QTY per case
+                        source_ws[f'I{output_row}'] = uom  # UOM
+                        source_ws[f'L{output_row}'] = description  # Description
+                        
+                        output_row += 1
+                else:
+                    print(f"Warning: UPC {upc} not found in counts dictionary")
+
+                item_start_row += 1  # Move to next item
+
+                # Stop if there's no more data in QTY column
+                if item_start_row >= xls_sheet.nrows or not xls_sheet.cell_value(item_start_row, 1):
+                    break
+
+            except IndexError as e:
+                print(f"IndexError at row {item_start_row}: {str(e)}")
+                break
+            except Exception as e:
+                print(f"Error processing row {item_start_row}: {str(e)}")
+                break
+
+        # Update total quantity
+        source_ws['B13'] = total_lines
+        print(f"Total lines/cases: {total_lines}")
+
+        format_cells_as_text(source_ws)
+        align_cells_left(source_ws)
 
         source_wb.save(dest_file)
         print(f"Saved file successfully as {dest_file}")
@@ -126,8 +170,8 @@ def convert_xls_data(uploaded_file, dest_file):
         return False
 
 
-def process_TSCIS(file_path):
-    """Main function to process TSC files."""
+def process_TSCISASN(file_path):
+    """Main function to process TSCIS ASN files."""
     try:
         current_date = get_current_date()
         po_number = extract_po_number(file_path, is_xlsx=file_path.endswith('.xlsx'))
@@ -153,7 +197,7 @@ def process_TSCIS(file_path):
         return backup_file, po_number
 
     except Exception as e:
-        print(f"Error in process_TSC: {str(e)}")
-        raise  # Re-raise the exception to be caught by the main app
+        print(f"Error in process_TSCISASN: {str(e)}")
+        raise
 
 

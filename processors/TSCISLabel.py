@@ -7,17 +7,19 @@ import tempfile
 from ExcelHelpers import (
     QTY_total, resource_path, oneToMany, manyToMany, get_current_date, extract_po_number, format_cells_as_text, align_cells_left, get_column_length, FINISHED_FOLDER
 )
+from upc_counts import counts  # Add this import
 
 
 
-# Define source file for TSC IS NEED TO ADD COME BACK HERE
-source_asn_xls = resource_path("assets/TSCISLabel/Master Template Tractor Supply IS ASN.xlsx")
+# Define source file for TSC IS - Update the path to match your actual template file
+source_asn_xls = resource_path("assets/TSCIS/Master Template TSC IS UCC128 Label Request.xlsx")  # Changed template name
 
-# Check if the file exists
+# Add debug print to help troubleshoot
+print(f"Looking for Label template at: {source_asn_xls}")
 if not os.path.exists(source_asn_xls):
-    print("File does not exist at:", source_asn_xls)
+    print(f"WARNING: Label template file not found at {source_asn_xls}")
 else:
-    print("File found at:", source_asn_xls)
+    print(f"Label template file found at {source_asn_xls}")
 
 
 # Function to copy data from uploaded .xlsx file to the ASN .xlsx backup
@@ -40,7 +42,7 @@ def copy_xlsx_data(uploaded_file, dest_file):
             'C9': 'B11'
         }
 
-        # Transfer data with debugging
+        # Transfer static data
         for upload_cell, copy_cell in data_map.items():
             try:
                 value = uploaded_ws[upload_cell].value
@@ -49,17 +51,34 @@ def copy_xlsx_data(uploaded_file, dest_file):
             except Exception as e:
                 print(f"Error copying from {upload_cell} to {copy_cell}: {str(e)}")
 
-        # Calculate dynamic column length starting from A18
-        column_length = get_column_length(uploaded_ws, start_row=18)
+        # Calculate total labels needed based on UPC counts
+        total_labels = 0
+        row = 18  # Start at row 18
+        
+        while uploaded_ws[f'B{row}'].value:  # While we have QTY values
+            try:
+                upc = str(int(uploaded_ws[f'E{row}'].value))  # Get UPC from column E
+                qty = int(uploaded_ws[f'B{row}'].value)       # Get QTY from column B
+                
+                if upc in counts:
+                    items_per_case = counts[upc]
+                    labels_needed = qty // items_per_case  # Integer division
+                    total_labels += labels_needed
+                    print(f"Row {row}: UPC {upc}, QTY {qty}, Items/Case {items_per_case}, Labels {labels_needed}")
+                else:
+                    print(f"Warning: UPC {upc} not found in counts dictionary")
+                
+                row += 1
+                
+            except Exception as e:
+                print(f"Error processing row {row}: {str(e)}")
+                break
 
-        # Copy value from 'C4' into 'B17' and down using oneToMany
-        oneToMany(uploaded_ws, output_ws, 3, 2, 'B', 17, column_length)
+        # Write total labels to C14
+        output_ws['C14'] = total_labels
+        print(f"Total labels needed: {total_labels}")
 
-        format_cells_as_text(output_ws)
-        align_cells_left(output_ws)
-        align_cells_left(output_ws)
         output_wb.save(dest_file)
-        print(f"Saved file successfully as {dest_file}")
         return True
 
     except Exception as e:
@@ -82,40 +101,54 @@ def convert_xls_data(uploaded_file, dest_file):
 
         # Mapping uploaded cells to copy cells with error handling
         data_map = {
-            (13, 1): 'E3', (13, 3): 'E4', (13, 4): 'E5',
-            (13, 9): 'E6', (13, 10): 'E7', (13, 11): 'E8',
-            (8, 2): 'B11', (6,2) : 'E11'
+            (13, 1): 'F3', (13, 4): 'F4', (13,7): 'F5',
+            (13, 9): 'F6', (13, 10): 'F7', (13, 11): 'F8',
+            (3, 2): 'A14', (13, 3):'B14'
         }
         
+        # Copy the static data first
         for (row, col), copy_cell in data_map.items():
             try:
                 value = xls_sheet.cell_value(row, col)
                 source_ws[copy_cell] = value
                 print(f"Copied value '{value}' from ({row}, {col}) to {copy_cell}")
-            except IndexError as e:
-                print(f"IndexError: ({row}, {col}) is out of range: {str(e)}")
             except Exception as e:
-                print(f"Unexpected error copying ({row}, {col}) to {copy_cell}: {str(e)}")
+                print(f"Error copying ({row}, {col}) to {copy_cell}: {str(e)}")
 
-        # Calculate dynamic column length starting from A17
-        column_length = get_column_length(xls_sheet, start_row=17)
-        print(f"Column length calculated: {column_length}")
+        # Calculate total labels needed based on UPC counts
+        total_labels = 0
+        row = 17  # Start at row 18 (17 in 0-based index)
+        
+        while True:
+            try:
+                # Get UPC and QTY from the current row
+                upc = str(int(xls_sheet.cell_value(row, 4)))  # Column E (4 in 0-based)
+                qty = int(xls_sheet.cell_value(row, 1))      # Column B (1 in 0-based)
+                
+                if upc in counts:
+                    items_per_case = counts[upc]
+                    labels_needed = qty // items_per_case  # Integer division
+                    total_labels += labels_needed
+                    print(f"Row {row+1}: UPC {upc}, QTY {qty}, Items/Case {items_per_case}, Labels {labels_needed}")
+                else:
+                    print(f"Warning: UPC {upc} not found in counts dictionary")
+                
+                row += 1  # Move to next row
+                
+                # Check if we've reached the end of the data
+                if not xls_sheet.cell_value(row, 1):  # No more QTY values
+                    break
+                    
+            except IndexError:
+                # Reached end of sheet
+                break
+            except Exception as e:
+                print(f"Error processing row {row+1}: {str(e)}")
+                break
 
-        # Perform many-to-many copy operations with debugging
-        manyToMany(xls_sheet, source_ws, 18, 0, 'A', 17, column_length)  # Item No
-        oneToMany(xls_sheet, source_ws, 3, 2, 'B', 17, column_length-1)  # Copy 'C4' to 'B17'
-        manyToMany(xls_sheet, source_ws, 18, 4, 'D', 17, column_length)  # UPS
-        manyToMany(xls_sheet, source_ws, 18, 5, 'E', 17, column_length)  # Buyer Part
-        manyToMany(xls_sheet, source_ws, 18, 6, 'F', 17, column_length)  # Vendor Part
-        manyToMany(xls_sheet, source_ws, 18, 1, 'G', 17, column_length)  # QTY
-        manyToMany(xls_sheet, source_ws, 18, 2, 'H', 17, column_length)  # UOM
-        manyToMany(xls_sheet, source_ws, 18, 8, 'I', 17, column_length)  # Description
-
-        # Sum the QTY values and place the total
-        qty_total = QTY_total(xls_sheet, 18, 1)
-        source_ws['E13'] = qty_total
-        source_ws['B13'] = qty_total
-        print(f"Total QTY placed in E13 and B13: {qty_total}")
+        # Write total labels to C14
+        source_ws['C14'] = total_labels
+        print(f"Total labels needed: {total_labels}")
 
         source_wb.save(dest_file)
         print(f"Saved file successfully as {dest_file}")
@@ -126,14 +159,14 @@ def convert_xls_data(uploaded_file, dest_file):
         return False
 
 
-def process_TSCIS(file_path):
-    """Main function to process TSC files."""
+def process_TSCISLabel(file_path):
+    """Main function to process TSCIS Label files."""
     try:
         current_date = get_current_date()
         po_number = extract_po_number(file_path, is_xlsx=file_path.endswith('.xlsx'))
         
-        # Fix the path separator issue by using os.path.join
-        backup_file = os.path.join(FINISHED_FOLDER, 'TSCIS', f"Tractor Supply IS ASN {po_number} {current_date}.xlsx")
+        # Use a different filename for the label file
+        backup_file = os.path.join(FINISHED_FOLDER, 'TSCIS', f"Tractor Supply IS Label {po_number} {current_date}.xlsx")
         
         # Ensure directory exists
         os.makedirs(os.path.dirname(backup_file), exist_ok=True)
@@ -153,5 +186,5 @@ def process_TSCIS(file_path):
         return backup_file, po_number
 
     except Exception as e:
-        print(f"Error in process_TSC: {str(e)}")
-        raise  # Re-raise the exception to be caught by the main app
+        print(f"Error in process_TSCISLabel: {str(e)}")
+        raise
