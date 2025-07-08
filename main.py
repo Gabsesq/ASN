@@ -2,6 +2,9 @@ from flask import Flask, request, render_template, send_file
 import os
 import sys
 import webbrowser
+from openpyxl import load_workbook
+import xlrd
+from datetime import date, timedelta, datetime
 from processors.ChewyASN import process_ChewyASN
 from processors.ChewyLabel import process_ChewyLabel
 from processors.TSC import process_TSC
@@ -16,8 +19,7 @@ from processors.MurdochsLabel import process_MurdochsLabel
 from processors.ScheelsASN import process_ScheelsASN
 from processors.ScheelsLabel import process_ScheelsLabel
 from ExcelHelpers import resource_path, UPLOAD_FOLDER, FINISHED_FOLDER
-from processors.Chewy20 import process_Chewy20
-from processors.Thrive20 import process_Thrive20
+from calendar_helpers import get_ship_date_recommendation, format_ship_date_for_calendar, get_calendar_event_details
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     print('running in a PyInstaller bundle')
@@ -42,18 +44,58 @@ tscis_folder = os.path.join(FINISHED_FOLDER, 'TSCIS')
 if not os.path.exists(tscis_folder):
     os.makedirs(tscis_folder)
 
+def get_company_from_excel(file_path):
+    """Reads cell A2 from an Excel file to determine the company."""
+    try:
+        company_string = None
+        if file_path.endswith('.xlsx'):
+            workbook = load_workbook(file_path)
+            sheet = workbook.active
+            company_string = sheet['A2'].value
+        elif file_path.endswith('.xls'):
+            workbook = xlrd.open_workbook(file_path)
+            sheet = workbook.sheet_by_index(0)
+            company_string = sheet.cell_value(1, 0)  # Row 2 (index 1), Column A (index 0)
+        else:
+            return None # Unsupported file type
+
+        if not company_string:
+            return None
+
+        # Determine company based on keywords
+        if "Chewy" in company_string:
+            return "Chewy"
+        if "Tractor Supply IS" in company_string:
+            return "TSCIS"
+        elif "Tractor Supply" in company_string:
+            return "TSC"
+        if "Pet Supermarket" in company_string:
+            return "Pet Supermarket"
+        if "Thrive" in company_string:
+            return "Thrive"
+        if "Murdoch's" in company_string:
+            return "Murdochs"
+        if "Scheels" in company_string:
+            return "Scheels"
+        if "TSC" in company_string:
+            return "TSC"
+        
+        return None  # No matching company found
+    except Exception as e:
+        print(f"Error reading Excel file: {e}")
+        return None
+
 @app.route('/')
 def upload_form():
     return render_template('upload.html')  # Serve the form from an HTML file
 
+@app.route('/calendar')
+def calendar_view():
+    return render_template('calendar.html')
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     try:
-        company = request.form.get('company')
-        
-        # Add debug print
-        print(f"Processing company: {company}")
-
         # Check for file uploads
         asn_file = request.files.get('asn_file_1')
         if not asn_file:
@@ -65,8 +107,23 @@ def upload_file():
         asn_file.save(asn_file_path)
         print(f"Saved ASN file to: {asn_file_path}")
 
+        # Determine company from Excel file
+        company = get_company_from_excel(asn_file_path)
+        if not company:
+            return render_template('back.html', message="Could not determine company from Excel file."), 400
+        
+        # Add debug print
+        print(f"Processing company: {company}")
+
         try:
-            if company == "TSCIS":
+            if company == "Chewy":
+                asn_output, po_number = process_ChewyASN(asn_file_path)
+                label_output, _ = process_ChewyLabel(asn_file_path)
+                processed_files = [asn_output, label_output]
+            elif company == "TSC":
+                output, po_number = process_TSC(asn_file_path)
+                processed_files = [output]
+            elif company == "TSCIS":
                 print("Processing TSCIS files...")
                 # Process both ASN and Label files
                 asn_output, po_number = process_TSCISASN(asn_file_path)
@@ -74,9 +131,28 @@ def upload_file():
                 label_output, _ = process_TSCISLabel(asn_file_path)
                 print(f"Label processed: {label_output}")
                 processed_files = [asn_output, label_output]
+            elif company == "Pet Supermarket":
+                asn_output, po_number = process_PetSupermarketASN(asn_file_path)
+                label_output, _ = process_PetSupermarketLabel(asn_file_path)
+                processed_files = [asn_output, label_output]
+            elif company == "Thrive":
+                asn_output, po_number = process_ThriveASN(asn_file_path)
+                label_output, _ = process_ThriveLabel(asn_file_path)
+                processed_files = [asn_output, label_output]
+            elif company == "Murdochs":
+                asn_output, po_number = process_MurdochsASN(asn_file_path)
+                label_output, _ = process_MurdochsLabel(asn_file_path)
+                processed_files = [asn_output, label_output]
+            elif company == "Scheels":
+                asn_output, po_number = process_ScheelsASN(asn_file_path)
+                label_output, _ = process_ScheelsLabel(asn_file_path)
+                processed_files = [asn_output, label_output]
             else:
-                # ... rest of your company processing ...
-                pass
+                return render_template('back.html', message=f"Unknown company: {company}"), 400
+
+            # Get enhanced calendar event details
+            calendar_event = get_calendar_event_details(company, asn_file_path, po_number)
+            ship_date_str = calendar_event.get('ship_date')
 
             return render_template(
                 'back.html',
@@ -84,6 +160,8 @@ def upload_file():
                 processed_files=processed_files,
                 company=company,
                 po_number=po_number,
+                ship_date=ship_date_str,
+                calendar_event=calendar_event
             )
 
         except Exception as e:

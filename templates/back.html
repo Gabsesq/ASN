@@ -12,7 +12,6 @@
             margin-top: 20px;
         }
 
-
         .folder-icon {
             width: 80px;
             height: 80px;
@@ -38,15 +37,65 @@
         display: block;
     }
 
+    .calendar-info {
+        background-color: #f0f8ff;
+        border: 1px solid #b0d4f1;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 600px;
+        text-align: left;
+    }
+
+    .calendar-info h3 {
+        color: #2c5aa0;
+        margin-top: 0;
+    }
+
+    .calendar-detail {
+        margin: 5px 0;
+        font-size: 14px;
+    }
+
+    .priority-high { color: #d32f2f; font-weight: bold; }
+    .priority-medium { color: #f57c00; font-weight: bold; }
+    .priority-low { color: #388e3c; font-weight: bold; }
 
     </style>
 </head>
 <body>
     <h1>{{ message }}</h1>
 
+    <!-- Display calendar event information -->
+    {% if calendar_event %}
+    <div class="calendar-info">
+        <h3>📅 Calendar Event Details</h3>
+        {% if calendar_event.company == "Chewy" %}
+            <div class="calendar-detail"><strong>Chewy Location:</strong> {{ calendar_event.location }}</div>
+            <div class="calendar-detail"><strong>PO Number:</strong> {{ calendar_event.po_number }}</div>
+            <div class="calendar-detail"><strong>Ship Date:</strong> {{ calendar_event.ship_date }}</div>
+        {% elif calendar_event.company == "Pet Supermarket" %}
+            {% if calendar_event.get('due_date') %}
+            <div class="calendar-detail"><strong>Due Date:</strong> {{ calendar_event.due_date }}</div>
+            {% endif %}
+            {% if calendar_event.get('days_until_due') %}
+            <div class="calendar-detail"><strong>Days Until Due:</strong> {{ calendar_event.days_until_due }}</div>
+            {% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Display multiple processed files download links, if available -->
     <div class="file-list">
         <h3>Processed Files for PO Number: {{ po_number }}</h3>
+        
+        <!-- Add shipping date input -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <label for="shipDate">Select Ship Date:</label>
+            <input type="date" id="shipDate" value="{{ ship_date or '' }}">
+            <button class="button-8" onclick="setShipDate('{{ po_number }}', '{{ company }}')">Set Ship Date</button>
+        </div>
+
         {% if processed_files %}
             {% for file_path in processed_files %}
                 <a href="{{ url_for('download_file', file_path=file_path) }}" class="file-item">
@@ -72,8 +121,39 @@
     <div style="text-align: center; margin-top: 20px;">
         <a href="/" class="button-8">Go Back to Upload Page</a>
     </div>
-    <!-- JavaScript to shut down the server when the user navigates away -->
+
+    {% set chewyLocation = calendar_event.location if calendar_event and calendar_event.company == 'Chewy' else '' %}
     <script>
+        var chewyLocation = {{ chewyLocation|tojson }};
+
+        function setShipDate(poNumber, companyName) {
+            const dateInput = document.getElementById('shipDate');
+            const selectedDate = dateInput.value;
+
+            if (!selectedDate) {
+                alert('Please select a date.');
+                return;
+            }
+
+            const events = JSON.parse(localStorage.getItem('shippingEvents')) || [];
+
+            // Use Chewy location if available
+            let eventDesc = `${companyName} - PO: ${poNumber}`;
+            if (companyName === 'Chewy' && chewyLocation) {
+                eventDesc = `Chewy ${chewyLocation} - PO: ${poNumber}`;
+            }
+
+            const newEvent = {
+                id: Date.now(), // Unique ID for the event
+                date: new Date(selectedDate),
+                desc: eventDesc
+            };
+
+            events.push(newEvent);
+            localStorage.setItem('shippingEvents', JSON.stringify(events));
+            alert(`Ship date for ${eventDesc} has been set to ${selectedDate}.`);
+        }
+
         window.addEventListener('beforeunload', function() {
             navigator.sendBeacon('/shutdown');
         });

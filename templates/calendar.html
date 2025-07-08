@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Calendar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Shipping Calendar</h1>
+        <div id="calendar"></div>
+        <button class="nav-btn" onclick="window.location.href='/'">Back to Upload</button>
+    </div>
+
+    <script src="{{ url_for('static', filename='calendar.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            let savedEvents = JSON.parse(localStorage.getItem('shippingEvents')) || [];
+
+            // --- Auto-delete events older than 60 days ---
+            const sixtyDaysAgo = new Date();
+            sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+            const recentEvents = savedEvents.filter(event => {
+                const eventDate = new Date(event.date);
+                return eventDate >= sixtyDaysAgo;
+            });
+
+            // If any events were removed, update localStorage
+            if (recentEvents.length < savedEvents.length) {
+                localStorage.setItem('shippingEvents', JSON.stringify(recentEvents));
+                savedEvents = recentEvents;
+            }
+            // ------------------------------------------------
+
+            // Convert date strings back to Date objects
+            const events = savedEvents.map(event => {
+                return {
+                    ...event,
+                    date: new Date(event.date)
+                };
+            });
+            
+            const cal = new calendar(calendarEl, {
+                events: events,
+                onEventClick: function(event) {
+                    const newDateStr = prompt("Enter new ship date (YYYY-MM-DD):", event.date.toISOString().slice(0, 10));
+                    if (newDateStr) {
+                        try {
+                            const newDate = new Date(newDateStr);
+                            if (isNaN(newDate.getTime())) {
+                                throw new Error("Invalid date format.");
+                            }
+
+                            // Find the event and update it
+                            const updatedEvents = savedEvents.map(e => {
+                                if (e.id === event.id) {
+                                    e.date = newDate;
+                                }
+                                return e;
+                            });
+
+                            localStorage.setItem('shippingEvents', JSON.stringify(updatedEvents));
+                            location.reload(); // Refresh the page to show the updated calendar
+                        } catch (error) {
+                            alert("Invalid date format. Please use YYYY-MM-DD.");
+                        }
+                    }
+                },
+                onDayClick: function(date) {
+                    // This function can be used to add new events directly from the calendar
+                    // For now, we'll leave it empty as we're adding events from the results page
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

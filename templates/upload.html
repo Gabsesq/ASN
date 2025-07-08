@@ -10,40 +10,21 @@
 </head>
 <body>
 
+<div class="container">
+    <button class="nav-btn" onclick="window.location.href='/calendar'">View Shipping Calendar</button>
+</div>
+
 <h2>Upload an Excel File</h2>
 
 <form id="uploadForm" enctype="multipart/form-data" method="POST" action="/upload">
-    <!-- Company dropdown -->
-    <select id="company" name="company" required class="select-8">
-        <option value="">-- Select a Company --</option>
-        <option value="Chewy">Chewy</option>
-        <option value="Chewy20">Chewy 20 Digit</option>
-        <option value="TSC">TSC</option>
-        <option value="TSCIS">TSCIS</option>
-        <option value="PetSupermarket">PetSupermarket</option>
-        <option value="Thrive">Thrive</option>
-        <option value="Thrive20">Thrive20</option>
-        <option value="Murdochs">Murdochs</option>
-        <option value="Scheels">Scheels</option>
-    </select>
     <br><br>
 
     <!-- ASN file upload -->
-    <div id="asn-upload" style="display: none;">
+    <div id="asn-upload">
         <div id="drop-area-asn">
             <p>Drag and drop your PO file here or click to select</p>
             <input type="file" id="asn_file_1" name="asn_file_1" accept=".xlsx, .xls" style="display:none;">
             <div class="button-8" id="browseButtonASN">Browse File</div>
-        </div>
-    </div>
-    <br><br>
-
-    <!-- 20-digit label file upload -->
-    <div id="label-upload" style="display: none;">
-        <div id="drop-area-label">
-            <p>Drag and drop your 20-digit label file here or click to select</p>
-            <input type="file" id="label_file" name="label_file" accept=".xlsx, .xls" style="display:none;">
-            <div class="button-8" id="browseButtonLabel">Browse File</div>
         </div>
     </div>
     <br><br>
@@ -53,7 +34,7 @@
 
 <!-- Styling for the drag-and-drop areas -->
 <style>
-    #drop-area-asn, #drop-area-label {
+    #drop-area-asn {
         border: 2px dashed #ccc;
         padding: 20px;
         text-align: center;
@@ -63,7 +44,7 @@
         margin: 20px auto;
         background-color: #f9f9f9;
     }
-    #drop-area-asn.highlight, #drop-area-label.highlight {
+    #drop-area-asn.highlight {
         border-color: purple;
     }
     .button-8 {
@@ -79,72 +60,46 @@
 
 <!-- JavaScript for handling drag-and-drop and form behavior -->
 <script>
-    const companySelect = document.getElementById("company");
     const asnUpload = document.getElementById("asn-upload");
-    const labelUpload = document.getElementById("label-upload");
 
     const asnDropArea = document.getElementById("drop-area-asn");
-    const labelDropArea = document.getElementById("drop-area-label");
     const asnFileInput = document.getElementById("asn_file_1");
-    const labelFileInput = document.getElementById("label_file");
     const browseButtonASN = document.getElementById("browseButtonASN");
-    const browseButtonLabel = document.getElementById("browseButtonLabel");
 
-    // Show relevant upload sections based on company selection
-    companySelect.addEventListener("change", () => {
-            const selectedCompany = companySelect.value;
-
-            // Always show ASN upload for any selection
-            asnUpload.style.display = selectedCompany ? "block" : "none";
-
-            // Show label upload only for Chewy20 and Thrive20
-            labelUpload.style.display = (selectedCompany === "Chewy20" || selectedCompany === "Thrive20") 
-                ? "block" 
-                : "none";
+    // Prevent default drag behaviors
+    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
+        [asnDropArea].forEach(area => {
+            area.addEventListener(eventName, preventDefaults, false);
         });
+    });
 
-        // Prevent default drag behaviors
-        ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
-            [asnDropArea, labelDropArea].forEach(area => {
-                area.addEventListener(eventName, preventDefaults, false);
-            });
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight drop areas when dragging
+    ["dragenter", "dragover"].forEach(eventName => {
+        [asnDropArea].forEach(area => {
+            area.addEventListener(eventName, () => area.classList.add("highlight"), false);
         });
+    });
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        // Highlight drop areas when dragging
-        ["dragenter", "dragover"].forEach(eventName => {
-            [asnDropArea, labelDropArea].forEach(area => {
-                area.addEventListener(eventName, () => area.classList.add("highlight"), false);
-            });
+    ["dragleave", "drop"].forEach(eventName => {
+        [asnDropArea].forEach(area => {
+            area.addEventListener(eventName, () => area.classList.remove("highlight"), false);
         });
+    });
 
-        ["dragleave", "drop"].forEach(eventName => {
-            [asnDropArea, labelDropArea].forEach(area => {
-                area.addEventListener(eventName, () => area.classList.remove("highlight"), false);
-            });
-        });
+    // Handle file drop for ASN
+    asnDropArea.addEventListener("drop", e => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) asnFileInput.files = files;
+    });
 
-        // Handle file drop for ASN
-        asnDropArea.addEventListener("drop", e => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) asnFileInput.files = files;
-        });
-
-        // Handle file drop for 20-digit label
-        labelDropArea.addEventListener("drop", e => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) labelFileInput.files = files;
-        });
-
-        // Trigger file input on button click
-        browseButtonASN.addEventListener("click", () => asnFileInput.click());
-        browseButtonLabel.addEventListener("click", () => labelFileInput.click());
+    // Trigger file input on button click
+    browseButtonASN.addEventListener("click", () => asnFileInput.click());
     </script>
 </body>
 </html>

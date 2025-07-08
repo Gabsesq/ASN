@@ -1,100 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
 /* CSS */
 .button-8 {
-  background-color: #f4e1e4;
-  border-radius: 3px;
-  border: 1px solid #c77ac3;
-  box-shadow: rgba(187, 28, 28, 0.7) 0 1px 0 0 inset;
-  box-sizing: border-box;
-  color: #9d395a;
+  background: linear-gradient(90deg, #f8fafc 0%, #e0c3fc 100%);
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(160, 120, 200, 0.08);
+  color: #5a2676;
   cursor: pointer;
   display: inline-block;
-  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.15385;
+  font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', 'Liberation Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
   margin: 0;
   outline: none;
-  padding: 8px .8em;
-  position: relative;
+  padding: 12px 28px;
   text-align: center;
   text-decoration: none;
   user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: baseline;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  vertical-align: middle;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .button-8:hover,
 .button-8:focus {
-  background-color: #eab3cd;
-  color: #772c3f;
-}
-
-.button-8:focus {
-  box-shadow: 0 0 0 4px rgba(255, 0, 76, 0.15);
+  background: linear-gradient(90deg, #e0c3fc 0%, #f8fafc 100%);
+  color: #3d155f;
+  box-shadow: 0 4px 16px rgba(160, 120, 200, 0.16);
 }
 
 .button-8:active {
-  background-color: #e4a0b1;
-  box-shadow: none;
-  color: #772c3f;
+  background: #e0c3fc;
+  color: #3d155f;
 }
-
-
-
-
-
-
-
-
-
 
 /* Dropdown (Select) Styling */
 .select-8 {
-  background-color: #f4e1e4;
-  border-radius: 3px;
-  border: 1px solid #c77ac3;
-  box-shadow: rgba(187, 28, 28, 0.7) 0 1px 0 0 inset;
-  box-sizing: border-box;
-  color: #9d395a;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e0c3fc;
+  color: #5a2676;
   cursor: pointer;
-  font-family: -apple-system,system-ui,"Segoe UI","Liberation Sans",sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.15385;
-  padding: 8px .8em;
+  font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', 'Liberation Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 10px 16px;
   outline: none;
-  appearance: none; /* Remove default dropdown arrow */
+  appearance: none;
+  transition: border 0.2s, box-shadow 0.2s;
 }
 
 .select-8:hover,
 .select-8:focus {
-  background-color: #eab3cd;
-  color: #772c3f;
+  border: 1.5px solid #b993d6;
+  box-shadow: 0 2px 8px rgba(160, 120, 200, 0.08);
 }
 
-.select-8:focus {
-  box-shadow: 0 0 0 4px rgba(255, 0, 76, 0.15);
-}
-
-.select-8:active {
-  background-color: #e4a0b1;
-  box-shadow: none;
-  color: #772c3f;
-}
-
-/* Optional: Add custom dropdown arrow */
-.select-8::after {
-  content: "▼"; /* Add a custom arrow */
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
-}
-
-/* Optional: Style dropdown options */
 .select-8 option {
-  background-color: #f4e1e4;
-  color: #9d395a;
+  background: #f8fafc;
+  color: #5a2676;
 }

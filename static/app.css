@@ -1,4 +1,87 @@
-body
-{
-    background-color: rgb(236, 211, 206);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+    background: linear-gradient(120deg, #f8e1ec 0%, #e0a3c2 100%);
+    font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', 'Liberation Sans', sans-serif;
+    color: #3d155f;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Navigation button style */
+.nav-btn {
+    display: inline-block;
+    background: linear-gradient(90deg, #f7b6d2 0%, #e0a3c2 100%);
+    color: #fff;
+    font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', 'Liberation Sans', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 12px 32px;
+    border: none;
+    border-radius: 24px;
+    box-shadow: 0 2px 8px rgba(160, 120, 200, 0.10);
+    margin: 18px 0;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+}
+
+.nav-btn:hover, .nav-btn:focus {
+    background: linear-gradient(90deg, #e0a3c2 0%, #f7b6d2 100%);
+    color: #fff0f6;
+    box-shadow: 0 4px 16px rgba(160, 120, 200, 0.18);
+    text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', 'Liberation Sans', sans-serif;
+    font-weight: 600;
+    color: #5a2676;
+    letter-spacing: 0.01em;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.85);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(160, 120, 200, 0.10);
+    padding: 32px 24px;
+}
+
+a {
+    color: #7c3aed;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #5a2676;
+    text-decoration: underline;
+}
+
+label {
+    font-weight: 500;
+    color: #5a2676;
+}
+
+input[type="date"], input[type="text"], input[type="file"] {
+    font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', 'Liberation Sans', sans-serif;
+    border-radius: 6px;
+    border: 1px solid #e0c3fc;
+    padding: 8px 12px;
+    font-size: 1rem;
+    margin: 8px 0;
+    background: #f8fafc;
+    color: #3d155f;
+    transition: border 0.2s;
+}
+
+input[type="date"]:focus, input[type="text"]:focus, input[type="file"]:focus {
+    border: 1.5px solid #b993d6;
+    outline: none;
 }
