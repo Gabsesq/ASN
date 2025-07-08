@@ -100,53 +100,34 @@ def convert_xls_data(uploaded_file, dest_file):
             except Exception as e:
                 print(f"Unexpected error copying ({row}, {col}) to {copy_cell}: {str(e)}")
 
-        # Starting row in output sheet where data should be copied
-        output_row = 17
-        total_lines = 0
-
-        # Loop through each item in the upload sheet - starting at row 1 (after header)
-        item_start_row = 17  # Changed from 17 to 1 to match your XLS sheet
+        # --- AGGREGATE BY PRODUCT (UPC) ---
+        product_dict = {}  # key: UPC, value: dict with total_qty and other info
+        item_start_row = 17
         while True:
             try:
-                # Read QTY and UPC from the upload sheet
                 qty = int(float(xls_sheet.cell_value(item_start_row, 1)))  # Column B (QTY)
                 upc = str(int(xls_sheet.cell_value(item_start_row, 4)))  # Column E (UPC)
                 description = xls_sheet.cell_value(item_start_row, 7)  # Column H (Description)
                 vendor_part = xls_sheet.cell_value(item_start_row, 6)  # Column G (Vendor Part)
                 buyer_part = xls_sheet.cell_value(item_start_row, 5)  # Column F (Buyer Part)
                 uom = xls_sheet.cell_value(item_start_row, 2)  # Column C (UOM)
+                po_number = xls_sheet.cell_value(3, 2)  # PO Number
 
-                print(f"Processing row {item_start_row}: QTY={qty}, UPC={upc}")  # Debug print
-
-                # Look up UPC in counts dictionary
-                if upc in counts:
-                    items_per_case = counts[upc]
-                    num_cases = qty // items_per_case
-                    total_lines += num_cases
-                    print(f"UPC {upc}: {qty} items ÷ {items_per_case} = {num_cases} cases")
-
-                    # Create a row for each case
-                    for case_num in range(num_cases):
-                        source_ws[f'A{output_row}'] = output_row - 16  # Line number
-                        source_ws[f'B{output_row}'] = xls_sheet.cell_value(3, 2)  # PO Number
-                        source_ws[f'D{output_row}'] = "NA"  # Description
-                        source_ws[f'E{output_row}'] = upc  # UPC
-                        source_ws[f'F{output_row}'] = buyer_part  # Buyer Part
-                        source_ws[f'G{output_row}'] = vendor_part  # Vendor Part
-                        source_ws[f'H{output_row}'] = items_per_case  # QTY per case
-                        source_ws[f'I{output_row}'] = uom  # UOM
-                        source_ws[f'L{output_row}'] = description  # Description
-                        
-                        output_row += 1
+                if upc in product_dict:
+                    product_dict[upc]['qty'] += qty
                 else:
-                    print(f"Warning: UPC {upc} not found in counts dictionary")
+                    product_dict[upc] = {
+                        'qty': qty,
+                        'description': description,
+                        'vendor_part': vendor_part,
+                        'buyer_part': buyer_part,
+                        'uom': uom,
+                        'po_number': po_number
+                    }
 
-                item_start_row += 1  # Move to next item
-
-                # Stop if there's no more data in QTY column
+                item_start_row += 1
                 if item_start_row >= xls_sheet.nrows or not xls_sheet.cell_value(item_start_row, 1):
                     break
-
             except IndexError as e:
                 print(f"IndexError at row {item_start_row}: {str(e)}")
                 break
@@ -154,9 +135,25 @@ def convert_xls_data(uploaded_file, dest_file):
                 print(f"Error processing row {item_start_row}: {str(e)}")
                 break
 
-        # Update total quantity
-        source_ws['B13'] = total_lines
-        print(f"Total lines/cases: {total_lines}")
+        # --- WRITE ONE LINE PER PRODUCT ---
+        output_row = 17
+        line_number = 1
+        for upc, info in product_dict.items():
+            source_ws[f'A{output_row}'] = line_number  # Line number
+            source_ws[f'B{output_row}'] = info['po_number']  # PO Number
+            source_ws[f'D{output_row}'] = "NA"  # Description
+            source_ws[f'E{output_row}'] = upc  # UPC
+            source_ws[f'F{output_row}'] = info['buyer_part']  # Buyer Part
+            source_ws[f'G{output_row}'] = info['vendor_part']  # Vendor Part
+            source_ws[f'H{output_row}'] = info['qty']  # TOTAL QTY for this product
+            source_ws[f'I{output_row}'] = info['uom']  # UOM
+            source_ws[f'L{output_row}'] = info['description']  # Description
+            output_row += 1
+            line_number += 1
+
+        # Update total quantity (sum of all products)
+        source_ws['B13'] = 1
+        print(f"Set B13 to 1 as requested.")
 
         format_cells_as_text(source_ws)
         align_cells_left(source_ws)
