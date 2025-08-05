@@ -73,7 +73,7 @@ def get_company_from_excel(file_path):
             return "Pet Supermarket"
         if "Thrive" in company_string:
             return "Thrive"
-        if "Murdoch's" in company_string:
+        if "Murdoch" in company_string:
             return "Murdochs"
         if "Scheels" in company_string:
             return "Scheels"

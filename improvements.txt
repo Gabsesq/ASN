@@ -16,3 +16,5 @@ FOR 20 DIGIT.
       auto fill that ASN? reupload feels kind of clunky
 
 Scheels, Chewy, and Murdochs are all good
+
+Edit murdochs for multi-line skus (2 cartons, list out twice, and same line number)

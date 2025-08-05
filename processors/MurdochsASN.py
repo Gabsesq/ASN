@@ -5,6 +5,8 @@ import os
 from ExcelHelpers import (
     resource_path, FINISHED_FOLDER, format_cells_as_text, align_cells_left, manyToMany, oneToMany, typedValue
 )
+from upc_counts import counts  # Import the UPC counts dictionary
+
 # Define source files and destination copies for Chewy
 source_asn_xlsx = resource_path("assets/Murdochs/Blank Murdochs 856 ASN.xlsx")
 
@@ -27,38 +29,242 @@ def copy_xlsx_data(uploaded_file, dest_file):
     for upload_cell, copy_cell in data_map.items():
         source_ws[copy_cell] = uploaded_ws[upload_cell].value
 
-    total_cases = 0  # Initialize a variable to keep track of the total cases
+    # Manually assign values for cells that don't come from the uploaded file
+    source_ws['B12'] = "FEDG"
+    source_ws['B13'] = "Fedex"
+    
+    # Set current date in E11 and highlight it
+    current_date = datetime.datetime.now().strftime("%m/%d/%Y")
+    source_ws['E11'] = current_date
+    
+    # Highlight cell E11 with yellow background
+    from openpyxl.styles import PatternFill
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    source_ws['E11'].fill = yellow_fill
 
-      # Loop through each row to calculate the cases per UPC and accumulate the total cases
-    for i in range(23, xls_sheet.nrows):
-        upc = xls_sheet.cell_value(i, 5)  # Column F for UPC
-        qty = int(xls_sheet.cell_value(i, 8))  # Column I for QTY
+    # Create carton-based lines from the uploaded Excel file
+    carton_lines_count = create_carton_based_lines_from_xlsx(uploaded_ws, source_ws, start_row=23, target_start_row=19)
+    
+    print(f"Total carton lines created: {carton_lines_count}")
+    
+    # Additional copy and paste operations with helper functions
+    oneToMany_xlsx(uploaded_ws, source_ws, row=4, col=2, target_column='B', start_row=19, column_length=carton_lines_count)  # PO
+    oneToMany_xlsx(uploaded_ws, source_ws, row=4, col=7, target_column='C', start_row=19, column_length=carton_lines_count)  # PO Date
 
-        if upc in upc_counts:
-            items_per_case = upc_counts[upc]
-            cases = qty / items_per_case
-            total_cases += cases  # Add to the total cases
-            print(f"Row {i + 1}: UPC = {upc}, QTY = {qty}, Items per Case = {items_per_case}, Cases = {cases}")
-        else:
-            print(f"Warning: UPC {upc} not found in upc_cases dictionary.")
-    # Track numbers from A21 and below, copy to A20 in the copy
-    row = 21
-    data_to_copy = []
-    while uploaded_ws[f'A{row}'].value is not None:
-        data_to_copy.append(uploaded_ws[f'A{row}'].value)
-        row += 1
+    typedValue(source_ws, static_value="NA", target_column='D', start_row=19, column_length=carton_lines_count)
 
-    for i, value in enumerate(data_to_copy):
-        source_ws[f'A{20 + i}'] = value
-
-    count = len(data_to_copy)
-    value_from_upload = uploaded_ws['C4'].value
-
-    if value_from_upload is not None:
-        for i in range(20, 20 + count):
-            source_ws[f'B{i}'] = value_from_upload
+    # Set total cartons in B15 and "C" in E13
+    source_ws['B15'] = carton_lines_count
+    source_ws['E13'] = "C"
 
     source_wb.save(dest_file)
+
+def create_carton_based_lines_from_xlsx(uploaded_ws, source_ws, start_row=23, target_start_row=19):
+    """
+    Creates one line per carton instead of one line per product for XLSX files.
+    For each product, calculates how many cartons are needed and creates that many lines.
+    """
+    carton_lines = []  # Store all the data for carton-based lines
+    
+    # Process each product row from the uploaded file
+    row = start_row
+    while uploaded_ws[f'A{row}'].value is not None:
+        try:
+            # Get product data from the uploaded file
+            item_no = uploaded_ws[f'A{row}'].value  # Column A - Item number
+            qty = int(uploaded_ws[f'B{row}'].value)  # Column B - QTY
+            uom = uploaded_ws[f'C{row}'].value  # Column C - Unit of Measure
+            unit_price = uploaded_ws[f'D{row}'].value  # Column D - Unit Price
+            description = uploaded_ws[f'E{row}'].value  # Column E - Description
+            upc = uploaded_ws[f'F{row}'].value  # Column F - UPC
+            vendor_part = uploaded_ws[f'G{row}'].value  # Column G - Vendor Part
+            sku = uploaded_ws[f'I{row}'].value  # Column I - SKU
+            
+            # Skip if no item number (empty row)
+            if not item_no:
+                row += 1
+                continue
+                
+            # Calculate number of cartons needed
+            if upc in counts:
+                items_per_case = counts[upc]
+                cartons_needed = qty // items_per_case
+                remainder = qty % items_per_case
+                
+                print(f"Product {item_no}: QTY={qty}, Items per case={items_per_case}, Cartons={cartons_needed}, Remainder={remainder}")
+                
+                # Create one line per full carton
+                for carton_num in range(cartons_needed):
+                    carton_lines.append({
+                        'item_no': item_no,
+                        'qty': items_per_case,  # Full carton quantity
+                        'uom': uom,
+                        'unit_price': unit_price,
+                        'description': description,
+                        'vendor_part': vendor_part,
+                        'sku': sku,
+                        'upc': upc
+                    })
+                
+                # If there's a remainder, create one more line for the partial carton
+                if remainder > 0:
+                    carton_lines.append({
+                        'item_no': item_no,
+                        'qty': remainder,  # Partial carton quantity
+                        'uom': uom,
+                        'unit_price': unit_price,
+                        'description': description,
+                        'vendor_part': vendor_part,
+                        'sku': sku,
+                        'upc': upc
+                    })
+            else:
+                print(f"Warning: UPC {upc} not found in counts dictionary for item {item_no}")
+                # If UPC not found, create one line with original quantity
+                carton_lines.append({
+                    'item_no': item_no,
+                    'qty': qty,
+                    'uom': uom,
+                    'unit_price': unit_price,
+                    'description': description,
+                    'vendor_part': vendor_part,
+                    'sku': sku,
+                    'upc': upc
+                })
+            
+            row += 1
+                
+        except (ValueError, TypeError) as e:
+            print(f"Error processing row {row}: {e}")
+            row += 1
+            continue
+    
+    # Write the carton-based lines to the destination worksheet
+    for i, line_data in enumerate(carton_lines):
+        target_row = target_start_row + i
+        
+        # Write data to the appropriate columns
+        source_ws[f'A{target_row}'] = line_data['item_no']  # Item number
+        source_ws[f'F{target_row}'] = line_data['upc']      # UPC
+        source_ws[f'G{target_row}'] = line_data['sku']      # SKU
+        source_ws[f'H{target_row}'] = line_data['vendor_part']  # Vendor Part
+        source_ws[f'I{target_row}'] = line_data['qty']      # QTY (now per carton)
+        source_ws[f'J{target_row}'] = line_data['uom']      # Unit of Measure
+        source_ws[f'K{target_row}'] = line_data['description']  # Description
+        
+        print(f"Created carton line {i+1}: Item {line_data['item_no']}, QTY {line_data['qty']}, UPC {line_data['upc']}")
+    
+    return len(carton_lines)  # Return the number of carton lines created
+
+def create_carton_based_lines(xls_sheet, source_ws, start_row=23, target_start_row=19):
+    """
+    Creates one line per carton instead of one line per product for XLS files.
+    For each product, calculates how many cartons are needed and creates that many lines.
+    """
+    carton_lines = []  # Store all the data for carton-based lines
+    
+    # Process each product row from the uploaded file
+    for row_idx in range(start_row - 1, xls_sheet.nrows):  # start_row is 1-indexed, so subtract 1
+        try:
+            # Get product data from the uploaded file
+            item_no = xls_sheet.cell_value(row_idx, 0)  # Column A - Item number
+            qty = int(xls_sheet.cell_value(row_idx, 1))  # Column B - QTY
+            uom = xls_sheet.cell_value(row_idx, 2)  # Column C - Unit of Measure
+            unit_price = xls_sheet.cell_value(row_idx, 3)  # Column D - Unit Price
+            description = xls_sheet.cell_value(row_idx, 4)  # Column E - Description
+            vendor_part = xls_sheet.cell_value(row_idx, 6)  # Column G - Vendor Part
+            sku = xls_sheet.cell_value(row_idx, 8)  # Column I - SKU
+            upc = xls_sheet.cell_value(row_idx, 5)  # Column F - UPC
+            
+            # Skip if no item number (empty row)
+            if not item_no:
+                continue
+                
+            # Calculate number of cartons needed
+            if upc in counts:
+                items_per_case = counts[upc]
+                cartons_needed = qty // items_per_case
+                remainder = qty % items_per_case
+                
+                print(f"Product {item_no}: QTY={qty}, Items per case={items_per_case}, Cartons={cartons_needed}, Remainder={remainder}")
+                
+                # Create one line per full carton
+                for carton_num in range(cartons_needed):
+                    carton_lines.append({
+                        'item_no': item_no,
+                        'qty': items_per_case,  # Full carton quantity
+                        'uom': uom,
+                        'unit_price': unit_price,
+                        'description': description,
+                        'vendor_part': vendor_part,
+                        'sku': sku,
+                        'upc': upc
+                    })
+                
+                # If there's a remainder, create one more line for the partial carton
+                if remainder > 0:
+                    carton_lines.append({
+                        'item_no': item_no,
+                        'qty': remainder,  # Partial carton quantity
+                        'uom': uom,
+                        'unit_price': unit_price,
+                        'description': description,
+                        'vendor_part': vendor_part,
+                        'sku': sku,
+                        'upc': upc
+                    })
+            else:
+                print(f"Warning: UPC {upc} not found in counts dictionary for item {item_no}")
+                # If UPC not found, create one line with original quantity
+                carton_lines.append({
+                    'item_no': item_no,
+                    'qty': qty,
+                    'uom': uom,
+                    'unit_price': unit_price,
+                    'description': description,
+                    'vendor_part': vendor_part,
+                    'sku': sku,
+                    'upc': upc
+                })
+                
+        except (ValueError, IndexError) as e:
+            print(f"Error processing row {row_idx + 1}: {e}")
+            continue
+    
+    # Write the carton-based lines to the destination worksheet
+    for i, line_data in enumerate(carton_lines):
+        target_row = target_start_row + i
+        
+        # Write data to the appropriate columns
+        source_ws[f'A{target_row}'] = line_data['item_no']  # Item number
+        source_ws[f'F{target_row}'] = line_data['upc']      # UPC
+        source_ws[f'G{target_row}'] = line_data['sku']      # SKU
+        source_ws[f'H{target_row}'] = line_data['vendor_part']  # Vendor Part
+        source_ws[f'I{target_row}'] = line_data['qty']      # QTY (now per carton)
+        source_ws[f'J{target_row}'] = line_data['uom']      # Unit of Measure
+        source_ws[f'K{target_row}'] = line_data['description']  # Description
+        
+        print(f"Created carton line {i+1}: Item {line_data['item_no']}, QTY {line_data['qty']}, UPC {line_data['upc']}")
+    
+    return len(carton_lines)  # Return the number of carton lines created
+
+def oneToMany_xlsx(uploaded_ws, source_ws, row, col, target_column, start_row, column_length):
+    """
+    Copies a value from one specific cell in XLSX and pastes it into multiple rows in a target column.
+    """
+    try:
+        # Convert 1-indexed to 0-indexed for openpyxl
+        cell_value = uploaded_ws.cell(row=row, column=col+1).value
+        print(f"Copying value '{cell_value}' from ({row}, {col + 1})")
+
+        # Ensure exactly `column_length` rows are pasted without overshooting
+        for i in range(column_length):
+            current_row = start_row + i  # Adjust to paste into the correct row
+            source_ws[f'{target_column}{current_row}'] = cell_value
+            print(f"Pasting '{cell_value}' into {target_column}{current_row}")
+
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
 
 # Function to convert .xls to .xlsx and transfer data to a backup of ASN copy
 def convert_xls_data(uploaded_file, dest_file):
@@ -85,7 +291,15 @@ def convert_xls_data(uploaded_file, dest_file):
     # Manually assign values for cells that don’t come from the xls_sheet
     source_ws['B12'] = "FEDG"
     source_ws['B13'] = "Fedex"
-
+    
+    # Set current date in E11 and highlight it
+    current_date = datetime.datetime.now().strftime("%m/%d/%Y")
+    source_ws['E11'] = current_date
+    
+    # Highlight cell E11 with yellow background
+    from openpyxl.styles import PatternFill
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    source_ws['E11'].fill = yellow_fill
 
     # Debugging: Print the total number of rows and columns in the uploaded sheet
     total_rows = xls_sheet.nrows
@@ -97,38 +311,20 @@ def convert_xls_data(uploaded_file, dest_file):
         print(f"Error: Not enough rows to start processing from row 23.")
         return
 
-    # Count total number of data rows (looking for non-empty values in column A starting from row 23)
-    data_rows = 0
-    for row_idx in range(22, xls_sheet.nrows):  # Start from index 22 (row 23)
-        try:
-            value = xls_sheet.cell_value(row_idx, 0)  # Column A (index 0)
-            if value != '':  # Check for any non-empty value
-                data_rows += 1
-        except IndexError:
-            break
+    # Create carton-based lines instead of product-based lines
+    carton_lines_count = create_carton_based_lines(xls_sheet, source_ws, start_row=23, target_start_row=19)
     
-    print(f"Total data rows found: {data_rows}")
+    print(f"Total carton lines created: {carton_lines_count}")
     
-    # Use helper function safely with boundary checks
-    try:
-        if data_rows > 0:
-            manyToMany(xls_sheet, source_ws, 23, 0, 'A', 19, data_rows)  # A23 to A19       Item number
-            manyToMany(xls_sheet, source_ws, 23, 5, 'F', 19, data_rows)  # F23 to F19       UPC
-            manyToMany(xls_sheet, source_ws, 23, 8, 'G', 19, data_rows)  # I23 to G19       SKU
-            manyToMany(xls_sheet, source_ws, 23, 6, 'H', 19, data_rows)  # G23 to H19       Vendor Part
-            manyToMany(xls_sheet, source_ws, 23, 1, 'I', 19, data_rows)  # B23 to I19       QTY
-            manyToMany(xls_sheet, source_ws, 23, 2, 'J', 19, data_rows)  # C23 to J19       Unit of Measure
-            manyToMany(xls_sheet, source_ws, 23, 4, 'K', 19, data_rows)  # E23 to K19       Description
-        else:
-            print("No data found in column A starting from row 23.")
-    except Exception as e:
-        print(f"Error during copy operations: {str(e)}")
-
     # Additional copy and paste operations with helper functions
-    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=19, column_length=data_rows)  # PO
-    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=19, column_length=data_rows)  # PO Date
+    oneToMany(xls_sheet, source_ws, row=3, col=2, target_column='B', start_row=19, column_length=carton_lines_count)  # PO
+    oneToMany(xls_sheet, source_ws, row=3, col=7, target_column='C', start_row=19, column_length=carton_lines_count)  # PO Date
 
-    typedValue(source_ws, static_value="NA", target_column='D', start_row=19, column_length=data_rows)
+    typedValue(source_ws, static_value="NA", target_column='D', start_row=19, column_length=carton_lines_count)
+
+    # Set total cartons in B15 and "C" in E13
+    source_ws['B15'] = carton_lines_count
+    source_ws['E13'] = "C"
 
     format_cells_as_text(source_ws)
     format_cells_as_text(source_ws)
