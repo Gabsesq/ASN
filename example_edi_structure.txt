@@ -1,0 +1,35 @@
+EDI File Structure for Carton Labels
+====================================
+
+Your EDI file should have the following structure:
+
+Column A: 20-digit Carton Labels (one per row)
+
+Example:
+A1: 00108500160000033014
+A2: 00108500160000033021
+A3: 00108500160000033038
+A4: 00108500160000033045
+A5: 00108500160000033052
+...
+
+Important Notes:
+- Carton labels must be exactly 20 digits
+- Only Column A is used - other columns are ignored
+- Labels are copied directly to ASN rows in order (E19, E20, E21, etc.)
+- Make sure you have enough carton labels for all your ASN rows
+
+File Formats Supported:
+- .xlsx (Excel 2007+)
+- .xls (Excel 97-2003)
+
+How It Works:
+1. Upload your original order file (creates ASN with carton-based lines)
+2. Upload your EDI file with carton labels in Column A
+3. System copies carton labels directly to ASN rows (E19 down)
+4. Final ASN file is saved with "_with_labels" suffix
+
+Simple and Direct:
+- No matching required
+- No SKU or PO number needed
+- Just copy labels in order from EDI file to ASN file 

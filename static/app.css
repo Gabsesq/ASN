@@ -85,3 +85,133 @@ input[type="date"]:focus, input[type="text"]:focus, input[type="file"]:focus {
     border: 1.5px solid #b993d6;
     outline: none;
 }
+
+/* Logo styling - reasonable size */
+.logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    color: #5a2676;
+}
+
+/* Tab styles */
+.tab-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #f3d9e4;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
+    color: #77354b;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.tab-button:hover {
+    background-color: #f3d9e4;
+    color: #77354b;
+}
+
+.tab-button.active {
+    border-bottom-color: #77354b;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #77354b;
+    font-size: 16px;
+}
+
+.form-group select {
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    border: 2px solid #f3d9e4;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: white;
+}
+
+.form-group select:focus {
+    outline: none;
+    border-color: #77354b;
+}
+
+/* Drop area styles */
+#drop-area-asn, #drop-area-edi, #drop-area-edi-update, #drop-area-edi-auto-match {
+    border: 2px dashed #ccc;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    width: 100%;
+    max-width: 500px;
+    margin: 25px auto;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+}
+
+#drop-area-asn p, #drop-area-edi p, #drop-area-edi-update p, #drop-area-edi-auto-match p {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #5a2676;
+}
+
+#drop-area-asn.highlight, #drop-area-edi.highlight, #drop-area-edi-update.highlight, #drop-area-edi-auto-match.highlight {
+    border-color: #77354b;
+    background-color: #f3d9e4;
+}
+
+/* Button styles */
+.button-8 {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(90deg, #f7b6d2 0%, #e0a3c2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin: 10px 5px;
+}
+
+.button-8:hover {
+    background: linear-gradient(90deg, #e0a3c2 0%, #f7b6d2 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(160, 120, 200, 0.2);
+}

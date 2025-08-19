@@ -363,3 +363,560 @@ def process_MurdochsASN(file_path):
         convert_xls_data(file_path, backup_file)
 
     return backup_file, po_number
+
+def process_murdochs_asn_with_labels(order_file_path, edi_file_path=None):
+    """
+    Complete two-step ASN processing workflow.
+    
+    Step 1: Process order file to create ASN with carton-based lines
+    Step 2: (Optional) Process EDI file to add carton labels
+    
+    Args:
+        order_file_path: Path to the original order file (.xls or .xlsx)
+        edi_file_path: (Optional) Path to EDI file with carton labels
+    
+    Returns:
+        tuple: (final_asn_file_path, po_number)
+    
+    Example Usage:
+        # Step 1 only: Create ASN from order
+        asn_file, po = process_murdochs_asn_with_labels("order.xlsx")
+        
+        # Step 1 + 2: Create ASN and add carton labels
+        final_asn, po = process_murdochs_asn_with_labels("order.xlsx", "edi_labels.xlsx")
+    """
+    print("=== ENTERING process_murdochs_asn_with_labels ===")
+    print(f"Order file path: {order_file_path}")
+    print(f"EDI file path: {edi_file_path}")
+    
+    print("=== STEP 1: Processing Order File ===")
+    # Step 1: Create ASN from order file
+    asn_file_path, po_number = process_MurdochsASN(order_file_path)
+    print(f"Step 1 completed. ASN file: {asn_file_path}")
+    
+    if edi_file_path:
+        print("\n=== STEP 2: Processing EDI Carton Labels ===")
+        # Step 2: Add carton labels from EDI file
+        final_asn_path = process_carton_labels_edi(edi_file_path, asn_file_path)
+        print(f"Step 2 completed. Final ASN file: {final_asn_path}")
+        return final_asn_path, po_number
+    else:
+        print("\nNo EDI file provided. ASN created without carton labels.")
+        return asn_file_path, po_number
+
+def process_carton_labels_edi(edi_file_path, existing_asn_file_path):
+    """
+    Second step: Process EDI file with 20-digit carton labels and populate them into existing ASN file.
+    
+    Args:
+        edi_file_path: Path to the EDI file containing carton labels
+        existing_asn_file_path: Path to the existing ASN file to update
+    
+    Returns:
+        str: Path to the updated ASN file
+    """
+    print(f"Processing EDI carton labels file: {edi_file_path}")
+    print(f"Updating existing ASN file: {existing_asn_file_path}")
+    
+    # Load the existing ASN file
+    asn_wb = load_workbook(existing_asn_file_path)
+    asn_ws = asn_wb.active
+    
+    # Determine EDI file type and load it
+    print(f"EDI file path: {edi_file_path}")
+    print(f"EDI file extension: {edi_file_path.split('.')[-1]}")
+    
+    if edi_file_path.endswith('.xlsx'):
+        print("Processing as XLSX file...")
+        edi_wb = load_workbook(edi_file_path)
+        edi_ws = edi_wb.active
+        carton_labels = extract_carton_labels_from_xlsx(edi_ws)
+    elif edi_file_path.endswith('.xls'):
+        print("Processing as XLS file...")
+        try:
+            edi_book = xlrd.open_workbook(edi_file_path)
+            print(f"Successfully opened XLS file with {len(edi_book.sheet_names())} sheets")
+            print(f"Sheet names: {edi_book.sheet_names()}")
+            
+            # Try to find carton labels in all sheets
+            carton_labels = []
+            for sheet_idx, sheet_name in enumerate(edi_book.sheet_names()):
+                print(f"\n=== CHECKING SHEET {sheet_idx + 1}: {sheet_name} ===")
+                edi_sheet = edi_book.sheet_by_index(sheet_idx)
+                sheet_labels = extract_carton_labels_from_xls(edi_sheet)
+                if sheet_labels:
+                    print(f"Found {len(sheet_labels)} carton labels in sheet '{sheet_name}'")
+                    carton_labels.extend(sheet_labels)
+                else:
+                    print(f"No carton labels found in sheet '{sheet_name}'")
+            
+            if not carton_labels:
+                print(f"\n=== NO CARTON LABELS FOUND IN ANY SHEET ===")
+                print("Available sheets:")
+                for i, name in enumerate(edi_book.sheet_names()):
+                    sheet = edi_book.sheet_by_index(i)
+                    print(f"  Sheet {i+1}: '{name}' - {sheet.nrows} rows, {sheet.ncols} columns")
+                    
+        except Exception as e:
+            print(f"Error opening XLS file: {e}")
+            raise
+    else:
+        raise ValueError("EDI file must be .xlsx or .xls format")
+    
+    # Populate carton labels into the ASN file
+    populate_carton_labels_in_asn(asn_ws, carton_labels)
+    
+    # Save the updated ASN file
+    updated_file_path = existing_asn_file_path.replace('.xlsx', '_with_labels.xlsx')
+    asn_wb.save(updated_file_path)
+    
+    print(f"Updated ASN file saved as: {updated_file_path}")
+    return updated_file_path
+
+def extract_carton_labels_from_xlsx(edi_ws):
+    """
+    Extract carton labels from Column E and product names from Column I of XLSX EDI file, starting from row 19.
+    Returns a list of dictionaries with carton label data and associated product names.
+    """
+    carton_labels = []
+    
+    print(f"\n=== EXTRACTING CARTON LABELS AND PRODUCT NAMES FROM XLSX EDI FILE ===")
+    
+    # Look for data starting from row 19 (where data typically begins in ASN files)
+    row = 19
+    print(f"Starting to look for carton labels in Column E and product names in Column I from row {row}")
+    
+    while edi_ws[f'E{row}'].value is not None:
+        try:
+            # Extract carton label from column E
+            carton_label = edi_ws[f'E{row}'].value  # 20-digit carton label
+            
+            # Extract product name from column I
+            product_name = edi_ws[f'I{row}'].value  # Product name/SKU
+            
+            print(f"Row {row}: Carton Label = '{carton_label}', Product Name = '{product_name}'")
+            
+            if carton_label:
+                carton_label_str = str(carton_label).strip()
+                # Check if it's a 20-digit number (all digits)
+                if len(carton_label_str) == 20 and carton_label_str.isdigit():
+                    carton_labels.append({
+                        'carton_label': carton_label_str,
+                        'product_name': str(product_name).strip() if product_name else '',
+                        'row_number': row
+                    })
+                    print(f"  ✓ Added carton label: {carton_label_str} with product: '{product_name}'")
+                else:
+                    print(f"  ✗ Skipped (not a 20-digit number: {carton_label_str})")
+            else:
+                print(f"  ✗ Skipped (empty cell)")
+            
+            row += 1
+            
+        except Exception as e:
+            print(f"Error processing EDI row {row}: {e}")
+            row += 1
+            continue
+    
+    print(f"Extracted {len(carton_labels)} carton labels with product names from EDI file")
+    return carton_labels
+
+def extract_carton_labels_from_xls(edi_sheet):
+    """
+    Extract carton labels from Column E and product names from Column I of XLS EDI file, starting from row 19.
+    Returns a list of dictionaries with carton label data and associated product names.
+    """
+    carton_labels = []
+    
+    print(f"\n=== EXTRACTING CARTON LABELS AND PRODUCT NAMES FROM XLS EDI FILE ===")
+    print(f"Total rows in EDI sheet: {edi_sheet.nrows}")
+    print(f"Total columns in EDI sheet: {edi_sheet.ncols}")
+    
+    # Look for carton labels in Column E (index 4) and product names in Column I (index 8) starting from row 19
+    print(f"\n=== LOOKING FOR CARTON LABELS IN COLUMN E AND PRODUCT NAMES IN COLUMN I (starting from row 19) ===")
+    
+    for row_idx in range(18, edi_sheet.nrows):  # Start from row 19 (index 18)
+        try:
+            # Extract carton label from column E (index 4)
+            carton_label = edi_sheet.cell_value(row_idx, 4)  # Column E = index 4
+            
+            # Extract product name from column I (index 8)
+            product_name = edi_sheet.cell_value(row_idx, 8)  # Column I = index 8
+            
+            print(f"Row {row_idx + 1}: Carton Label = '{carton_label}' (type: {type(carton_label)}), Product Name = '{product_name}'")
+            
+            # Handle different data types that xlrd might return
+            if carton_label:
+                carton_label_str = str(carton_label).strip()
+                print(f"  Converted to string: '{carton_label_str}' (length: {len(carton_label_str)})")
+                
+                # Check if it's a 20-digit number (all digits)
+                if len(carton_label_str) == 20 and carton_label_str.isdigit():
+                    carton_labels.append({
+                        'carton_label': carton_label_str,
+                        'product_name': str(product_name).strip() if product_name else '',
+                        'row_number': row_idx + 1
+                    })
+                    print(f"  ✓ Added carton label: {carton_label_str} with product: '{product_name}'")
+                else:
+                    print(f"  ✗ Skipped (not a 20-digit number: {carton_label_str})")
+            else:
+                print(f"  ✗ Skipped (empty cell)")
+                
+        except Exception as e:
+            print(f"Error processing EDI row {row_idx + 1}: {e}")
+            continue
+    
+    print(f"\n=== SUMMARY ===")
+    print(f"Found {len(carton_labels)} carton labels with product names in Column E")
+    
+    # If we found carton labels, show them
+    if carton_labels:
+        print("Carton labels found:")
+        for i, label in enumerate(carton_labels):
+            print(f"  {i+1}. {label['carton_label']} (Row {label['row_number']}) with product: '{label['product_name']}'")
+    else:
+        print("No 20-digit carton labels found in Column E!")
+    
+    return carton_labels
+
+def populate_carton_labels_in_asn(asn_ws, carton_labels):
+    """
+    Populate carton labels into the ASN file using intelligent product name matching.
+    This ensures each 20-digit label is matched to the correct product regardless of order.
+    """
+    print(f"\n=== INTELLIGENT CARTON LABEL MATCHING ===")
+    print(f"Available carton labels: {len(carton_labels)}")
+    
+    # Extract product names from the ASN file (column H, starting from row 19)
+    asn_product_names = extract_product_names_from_asn(asn_ws)
+    print(f"Found {len(asn_product_names)} products in ASN file")
+    
+    # Extract product names from the EDI file to create the mapping
+    edi_product_names = extract_product_names_from_edi_labels(carton_labels)
+    print(f"Found {len(edi_product_names)} products in EDI file")
+    
+    # Create intelligent mapping between EDI products and ASN products
+    product_mapping = create_product_name_mapping(edi_product_names, asn_product_names)
+    print(f"Created mapping for {len(product_mapping)} products")
+    
+    # Populate carton labels based on the mapping
+    populated_count = populate_labels_using_mapping(asn_ws, carton_labels, product_mapping)
+    
+    print(f"\n=== SUMMARY ===")
+    print(f"Successfully matched and populated {populated_count} carton labels using intelligent product name matching")
+
+def extract_product_names_from_asn(asn_ws):
+    """
+    Extract product names from column I of the ASN file, starting from row 19.
+    Returns a list of dictionaries with row number and product name.
+    """
+    product_names = []
+    row = 19
+    
+    print(f"\n=== EXTRACTING PRODUCT NAMES FROM ASN FILE ===")
+    print(f"Looking for product names in column I starting from row {row}")
+    
+    while asn_ws[f'I{row}'].value is not None:
+        product_name = asn_ws[f'I{row}'].value
+        if product_name and str(product_name).strip():
+            product_names.append({
+                'row': row,
+                'name': str(product_name).strip(),
+                'original_name': product_name
+            })
+            print(f"Row {row}: Product name = '{product_name}'")
+        row += 1
+    
+    print(f"Extracted {len(product_names)} product names from ASN file")
+    return product_names
+
+def extract_product_names_from_edi_labels(carton_labels):
+    """
+    Extract product names from the EDI file based on carton label positions.
+    Now that we're extracting both carton labels and product names, we can use this data directly.
+    Returns a list of dictionaries with carton label and associated product name.
+    """
+    print(f"\n=== EXTRACTING PRODUCT NAMES FROM EDI LABELS ===")
+    
+    edi_products = []
+    
+    for label_data in carton_labels:
+        if 'product_name' in label_data and label_data['product_name']:
+            edi_products.append({
+                'carton_label': label_data['carton_label'],
+                'name': label_data['product_name'],
+                'row_number': label_data['row_number']
+            })
+            print(f"Product: '{label_data['product_name']}' with carton label: {label_data['carton_label']}")
+    
+    print(f"Extracted {len(edi_products)} product names from EDI labels")
+    return edi_products
+
+def create_product_name_mapping(edi_products, asn_products):
+    """
+    Create intelligent mapping between EDI products and ASN products based on name similarity.
+    Uses fuzzy string matching to find the best matches.
+    """
+    print(f"\n=== CREATING PRODUCT NAME MAPPING ===")
+    
+    if not edi_products or not asn_products:
+        print("Warning: Missing product data for mapping")
+        return {}
+    
+    mapping = {}
+    used_asn_products = set()
+    
+    # For each EDI product, find the best matching ASN product
+    for edi_product in edi_products:
+        best_match = None
+        best_score = 0
+        
+        for asn_product in asn_products:
+            if asn_product['row'] in used_asn_products:
+                continue  # This ASN product is already matched
+                
+            # Calculate similarity score using simple string matching
+            score = calculate_name_similarity(edi_product['name'], asn_product['name'])
+            
+            if score > best_score:
+                best_score = score
+                best_match = asn_product
+        
+        if best_match and best_score > 0.5:  # Threshold for acceptable match
+            mapping[edi_product['carton_label']] = {
+                'asn_row': best_match['row'],
+                'edi_name': edi_product['name'],
+                'asn_name': best_match['name'],
+                'similarity_score': best_score
+            }
+            used_asn_products.add(best_match['row'])
+            print(f"Matched: '{edi_product['name']}' -> '{best_match['name']}' (score: {best_score:.2f})")
+        else:
+            print(f"Warning: No good match found for '{edi_product['name']}' (best score: {best_score:.2f})")
+    
+    return mapping
+
+def calculate_name_similarity(name1, name2):
+    """
+    Calculate similarity between two product names.
+    Returns a score between 0 and 1, where 1 is exact match.
+    """
+    if not name1 or not name2:
+        return 0
+    
+    # Convert to lowercase and remove common separators
+    name1_clean = name1.lower().replace('-', ' ').replace('_', ' ').strip()
+    name2_clean = name2.lower().replace('-', ' ').replace('_', ' ').strip()
+    
+    # Exact match
+    if name1_clean == name2_clean:
+        return 1.0
+    
+    # Check if one contains the other
+    if name1_clean in name2_clean or name2_clean in name1_clean:
+        return 0.8
+    
+    # Check for common words
+    words1 = set(name1_clean.split())
+    words2 = set(name2_clean.split())
+    
+    if words1 and words2:
+        common_words = words1.intersection(words2)
+        total_words = words1.union(words2)
+        if total_words:
+            return len(common_words) / len(total_words)
+    
+    return 0.0
+
+def populate_labels_using_mapping(asn_ws, carton_labels, product_mapping):
+    """
+    Populate carton labels into the ASN file using the product mapping.
+    """
+    print(f"\n=== POPULATING LABELS USING MAPPING ===")
+    
+    populated_count = 0
+    unmapped_labels = []
+    
+    for carton_label_data in carton_labels:
+        carton_label = carton_label_data['carton_label']
+        
+        if carton_label in product_mapping:
+            mapping = product_mapping[carton_label]
+            asn_row = mapping['asn_row']
+            
+            # Populate the carton label in column E of the ASN
+            asn_ws[f'E{asn_row}'] = carton_label
+            print(f"Row {asn_row}: Mapped carton label {carton_label} to product '{mapping['asn_name']}' (similarity: {mapping['similarity_score']:.2f})")
+            populated_count += 1
+        else:
+            unmapped_labels.append(carton_label)
+            print(f"Warning: No mapping found for carton label {carton_label}")
+    
+    print(f"\n=== MAPPING SUMMARY ===")
+    print(f"Successfully populated {populated_count} carton labels using intelligent matching")
+    
+    if unmapped_labels:
+        print(f"Warning: {len(unmapped_labels)} carton labels could not be mapped:")
+        for label in unmapped_labels:
+            print(f"  - {label}")
+        print("These labels may not have had good product name matches or the products may not exist in the ASN file.")
+    
+    # Report any unused ASN rows
+    total_asn_products = len([p for p in extract_product_names_from_asn(asn_ws) if p['name']])
+    if populated_count < total_asn_products:
+        remaining = total_asn_products - populated_count
+        print(f"Note: {remaining} ASN product rows were not populated with carton labels")
+        print("This may be normal if there are more products in the ASN than carton labels in the EDI file.")
+    
+    return populated_count
+
+def extract_company_and_po_from_edi(edi_file_path):
+    """
+    Extract company name and PO number from EDI file.
+    For Murdochs: Company name is in A1, PO number is in B19.
+    Returns a tuple of (company_name, po_number) or (None, None) if not found.
+    """
+    try:
+        if edi_file_path.endswith('.xlsx'):
+            return extract_company_and_po_from_xlsx(edi_file_path)
+        elif edi_file_path.endswith('.xls'):
+            return extract_company_and_po_from_xls(edi_file_path)
+        else:
+            print(f"Unsupported file format: {edi_file_path}")
+            return None, None
+    except Exception as e:
+        print(f"Error extracting company and PO from EDI file: {e}")
+        return None, None
+
+def extract_company_and_po_from_xlsx(edi_file_path):
+    """
+    Extract company name and PO number from XLSX EDI file.
+    For Murdochs: Company name is in A1, PO number is in B19.
+    """
+    try:
+        edi_wb = load_workbook(edi_file_path)
+        edi_ws = edi_wb.active
+        
+        # Extract company name from A1
+        company_name = edi_ws['A1'].value
+        print(f"Extracted company name from A1: '{company_name}'")
+        
+        # Extract PO number from B19
+        po_number = edi_ws['B19'].value
+        print(f"Extracted PO number from B19: '{po_number}'")
+        
+        return company_name, po_number
+        
+    except Exception as e:
+        print(f"Error extracting company and PO from XLSX EDI file: {e}")
+        return None, None
+
+def extract_company_and_po_from_xls(edi_file_path):
+    """
+    Extract company name and PO number from XLS EDI file.
+    For Murdochs: Company name is in A1 (row 0, col 0), PO number is in B19 (row 18, col 1).
+    """
+    try:
+        edi_wb = xlrd.open_workbook(edi_file_path)
+        edi_sheet = edi_wb.sheet_by_index(0)
+        
+        # Extract company name from A1 (row 0, col 0)
+        company_name = edi_sheet.cell_value(0, 0)
+        print(f"Extracted company name from A1: '{company_name}'")
+        
+        # Extract PO number from B19 (row 18, col 1)
+        po_number = edi_sheet.cell_value(18, 1)
+        print(f"Extracted PO number from B19: '{po_number}'")
+        
+        return company_name, po_number
+        
+    except Exception as e:
+        print(f"Error extracting company and PO from XLS EDI file: {e}")
+        return None, None
+
+def find_matching_asn_file(company_name, po_number):
+    """
+    Find an existing ASN file that matches the company name and PO number.
+    Returns the full path to the matching ASN file or None if not found.
+    """
+    try:
+        print(f"Searching for ASN file with company: '{company_name}', PO: '{po_number}'")
+        
+        # Normalize the company name for comparison
+        company_normalized = company_name.strip().upper() if company_name else ""
+        po_normalized = str(po_number).strip() if po_number else ""
+        
+        print(f"Normalized search terms - Company: '{company_normalized}', PO: '{po_normalized}'")
+        
+        # Search through all ASN files in the Finished folder
+        for root, dirs, filenames in os.walk(FINISHED_FOLDER):
+            for filename in filenames:
+                if filename.endswith('.xlsx') and 'ASN' in filename:
+                    file_path = os.path.join(root, filename)
+                    
+                    # Check if this is a Murdochs ASN file
+                    if 'Murdochs' in filename or 'murdochs' in filename.lower():
+                        print(f"Checking Murdochs ASN file: {filename}")
+                        
+                        # Extract PO from the ASN file
+                        try:
+                            asn_wb = load_workbook(file_path)
+                            asn_ws = asn_wb.active
+                            
+                            # Get PO from B19 in the ASN file
+                            asn_po = asn_ws['B19'].value
+                            asn_po_normalized = str(asn_po).strip() if asn_po else ""
+                            
+                            print(f"  ASN file PO: '{asn_po_normalized}'")
+                            
+                            # Check if PO numbers match
+                            if asn_po_normalized == po_normalized:
+                                print(f"  ✓ MATCH FOUND: {file_path}")
+                                return file_path
+                            else:
+                                print(f"  ✗ PO mismatch")
+                                
+                        except Exception as e:
+                            print(f"  Error reading ASN file {filename}: {e}")
+                            continue
+        
+        print(f"No matching ASN file found for company '{company_name}' and PO '{po_number}'")
+        return None
+        
+    except Exception as e:
+        print(f"Error finding matching ASN file: {e}")
+        return None
+
+def process_edi_with_auto_match(edi_file_path):
+    """
+    Process EDI file by automatically finding the matching ASN file.
+    Returns the path to the updated ASN file or None if no match found.
+    """
+    try:
+        print(f"\n=== AUTO-MATCHING EDI TO ASN ===")
+        print(f"EDI file: {edi_file_path}")
+        
+        # Extract company and PO from EDI file
+        company_name, po_number = extract_company_and_po_from_edi(edi_file_path)
+        
+        if not company_name or not po_number:
+            print("Could not extract company name or PO number from EDI file")
+            return None
+        
+        # Find matching ASN file
+        matching_asn_path = find_matching_asn_file(company_name, po_number)
+        
+        if not matching_asn_path:
+            print("No matching ASN file found")
+            return None
+        
+        # Process the carton labels
+        print(f"Processing carton labels for matched ASN: {matching_asn_path}")
+        updated_asn_path = process_carton_labels_edi(edi_file_path, matching_asn_path)
+        
+        return updated_asn_path
+        
+    except Exception as e:
+        print(f"Error in auto-match process: {e}")
+        return None

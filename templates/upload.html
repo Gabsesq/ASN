@@ -3,103 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File</title>
-    <!-- Link to CSS files in the static folder -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='button.css') }}">
+    <title>ASN Automation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='button.css') }}">
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='icon.png') }}" alt="Logo" class="logo">
+            <h1>ASN Automation</h1>
+        </div>
 
-<div class="container">
-    <button class="nav-btn" onclick="window.location.href='/calendar'">View Shipping Calendar</button>
-</div>
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <button class="tab-button active" onclick="showTab('new-asn')">Create New ASN</button>
+            <button class="tab-button" onclick="showTab('auto-match')">Auto-Match EDI to ASN</button>
+        </div>
 
-<h2>Upload an Excel File</h2>
+        <!-- Tab 1: Create New ASN -->
+        <div id="new-asn" class="tab-content active">
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                <!-- ASN file upload -->
+                <div id="asn-upload">
+                    <div id="drop-area-asn">
+                        <p>Drag and drop your ASN file here</p>
+                        <input type="file" id="asn_file_1" name="asn_file_1" accept=".xlsx, .xls" style="display:none;">
+                        <div class="button-8" id="browseButtonASN">Browse ASN File</div>
+                    </div>
+                </div>
 
-<form id="uploadForm" enctype="multipart/form-data" method="POST" action="/upload">
-    <br><br>
+                <!-- EDI Carton Labels file upload (Optional) -->
+                <div id="edi-upload">
+                    <div id="drop-area-edi">
+                        <p>Drag and drop your EDI carton labels file here (Optional)</p>
+                        <input type="file" id="edi_file_1" name="edi_file_1" accept=".xlsx, .xls" style="display:none;">
+                        <div class="button-8" id="browseButtonEDI">Browse EDI File</div>
+                    </div>
+                </div>
+                <br><br>
+                <button type="submit" class="button-8">Process Files</button>
+            </form>
+        </div>
 
-    <!-- ASN file upload -->
-    <div id="asn-upload">
-        <div id="drop-area-asn">
-            <p>Drag and drop your PO file here or click to select</p>
-            <input type="file" id="asn_file_1" name="asn_file_1" accept=".xlsx, .xls" style="display:none;">
-            <div class="button-8" id="browseButtonASN">Browse File</div>
+        <!-- Tab 2: Auto-Match EDI to ASN -->
+        <div id="auto-match" class="tab-content">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="font-size: 16px; color: #5a2676; margin-bottom: 15px;">
+                    <strong>Auto-Match EDI to ASN</strong>
+                </p>
+                <p style="font-size: 14px; color: #77354b; margin-bottom: 20px;">
+                    Upload your EDI file and the system will automatically find the matching ASN file<br>
+                    based on the company name and PO number, then add the carton labels.
+                </p>
+            </div>
+            
+            <form id="autoMatchForm" action="/auto_match_edi" method="post" enctype="multipart/form-data">
+                <!-- EDI Carton Labels file upload for auto-matching -->
+                <div id="edi-upload-auto-match">
+                    <div id="drop-area-edi-auto-match">
+                        <p>Drag and drop your EDI carton labels file here</p>
+                        <input type="file" id="edi_file_auto_match" name="edi_file_auto_match" accept=".xlsx, .xls" style="display:none;">
+                        <div class="button-8" id="browseButtonEDIAutoMatch">Browse EDI File</div>
+                    </div>
+                </div>
+                <br><br>
+                <button type="submit" class="button-8">Auto-Match and Update ASN</button>
+            </form>
         </div>
     </div>
-    <br><br>
 
-    <button type="submit" class="button-8">Upload and Process</button>
-</form>
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
 
-<!-- Styling for the drag-and-drop areas -->
-<style>
-    #drop-area-asn {
-        border: 2px dashed #ccc;
-        padding: 20px;
-        text-align: center;
-        cursor: pointer;
-        width: 100%;
-        max-width: 500px;
-        margin: 20px auto;
-        background-color: #f9f9f9;
-    }
-    #drop-area-asn.highlight {
-        border-color: purple;
-    }
-    .button-8 {
-        display: inline-block;
-        padding: 10px 20px;
-        background-color: #f3d9e4;
-        color: rgb(119, 53, 75);
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
-</style>
+        // Original file upload functionality
+        const asnDropArea = document.getElementById("drop-area-asn");
+        const asnFileInput = document.getElementById("asn_file_1");
+        const browseButtonASN = document.getElementById("browseButtonASN");
 
-<!-- JavaScript for handling drag-and-drop and form behavior -->
-<script>
-    const asnUpload = document.getElementById("asn-upload");
+        const ediDropArea = document.getElementById("drop-area-edi");
+        const ediFileInput = document.getElementById("edi_file_1");
+        const browseButtonEDI = document.getElementById("browseButtonEDI");
 
-    const asnDropArea = document.getElementById("drop-area-asn");
-    const asnFileInput = document.getElementById("asn_file_1");
-    const browseButtonASN = document.getElementById("browseButtonASN");
+        // Auto-Match functionality
+        const ediDropAreaAutoMatch = document.getElementById("drop-area-edi-auto-match");
+        const ediFileInputAutoMatch = document.getElementById("edi_file_auto_match");
+        const browseButtonEDIAutoMatch = document.getElementById("browseButtonEDIAutoMatch");
 
-    // Prevent default drag behaviors
-    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
-        [asnDropArea].forEach(area => {
-            area.addEventListener(eventName, preventDefaults, false);
+        // Prevent default drag behaviors
+        [asnDropArea, ediDropArea, ediDropAreaAutoMatch].forEach(area => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
         });
-    });
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+        // Highlight drop area when item is dragged over it
+        [asnDropArea, ediDropArea, ediDropAreaAutoMatch].forEach(area => {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                area.addEventListener(eventName, highlight, false);
+            });
 
-    // Highlight drop areas when dragging
-    ["dragenter", "dragover"].forEach(eventName => {
-        [asnDropArea].forEach(area => {
-            area.addEventListener(eventName, () => area.classList.add("highlight"), false);
+            ['dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, unhighlight, false);
+            });
         });
-    });
 
-    ["dragleave", "drop"].forEach(eventName => {
-        [asnDropArea].forEach(area => {
-            area.addEventListener(eventName, () => area.classList.remove("highlight"), false);
+        // Handle dropped files
+        asnDropArea.addEventListener("drop", e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) asnFileInput.files = files;
         });
-    });
 
-    // Handle file drop for ASN
-    asnDropArea.addEventListener("drop", e => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length > 0) asnFileInput.files = files;
-    });
+        ediDropArea.addEventListener("drop", e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                ediFileInput.files = files;
+                console.log("EDI file dropped:", files[0].name);
+                alert("EDI file selected: " + files[0].name);
+            }
+        });
 
-    // Trigger file input on button click
-    browseButtonASN.addEventListener("click", () => asnFileInput.click());
+        ediDropAreaAutoMatch.addEventListener("drop", e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                ediFileInputAutoMatch.files = files;
+                console.log("EDI file dropped for auto-match:", files[0].name);
+                alert("EDI file selected for auto-match: " + files[0].name);
+            }
+        });
+
+        // Trigger file input on button click
+        browseButtonASN.addEventListener("click", () => asnFileInput.click());
+        browseButtonEDI.addEventListener("click", () => ediFileInput.click());
+        browseButtonEDIAutoMatch.addEventListener("click", () => ediFileInputAutoMatch.click());
+
+        // Add change event listeners to see when files are selected
+        ediFileInput.addEventListener("change", function() {
+            if (this.files.length > 0) {
+                console.log("EDI file selected via browse:", this.files[0].name);
+                alert("EDI file selected via browse: " + this.files[0].name);
+            }
+        });
+
+        ediFileInputAutoMatch.addEventListener("change", function() {
+            if (this.files.length > 0) {
+                console.log("EDI file selected for auto-match via browse:", this.files[0].name);
+                alert("EDI file selected for auto-match via browse: " + this.files[0].name);
+            }
+        });
+
+        // Add form submission debugging
+        document.getElementById("uploadForm").addEventListener("submit", function(e) {
+            console.log("Form submitted!");
+            console.log("ASN file:", asnFileInput.files[0]);
+            console.log("EDI file:", ediFileInput.files[0]);
+            
+            // Show alert with file info
+            let message = "Files being uploaded:\n";
+            if (asnFileInput.files[0]) {
+                message += "ASN: " + asnFileInput.files[0].name + "\n";
+            }
+            if (ediFileInput.files[0]) {
+                message += "EDI: " + ediFileInput.files[0].name + "\n";
+            }
+            alert(message);
+        });
+
+        document.getElementById("autoMatchForm").addEventListener("submit", function(e) {
+            console.log("Auto-match form submitted!");
+            console.log("EDI file for auto-match:", ediFileInputAutoMatch.files[0]);
+            
+            // Show alert with file info
+            let message = "Auto-matching EDI:\n";
+            if (ediFileInputAutoMatch.files[0]) {
+                message += "EDI: " + ediFileInputAutoMatch.files[0].name + "\n";
+            }
+            alert(message);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            e.currentTarget.classList.add('highlight');
+        }
+
+        function unhighlight(e) {
+            e.currentTarget.classList.remove('highlight');
+        }
     </script>
 </body>
 </html>

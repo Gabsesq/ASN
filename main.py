@@ -98,14 +98,33 @@ def upload_file():
     try:
         # Check for file uploads
         asn_file = request.files.get('asn_file_1')
+        edi_file = request.files.get('edi_file_1')  # Optional EDI file
+        
+        print(f"=== FILE UPLOAD DEBUG ===")
+        print(f"ASN file: {asn_file}")
+        print(f"EDI file: {edi_file}")
+        if asn_file:
+            print(f"ASN filename: {asn_file.filename}")
+        if edi_file:
+            print(f"EDI filename: {edi_file.filename}")
+        
         if not asn_file:
             print("No ASN file uploaded")
             return render_template('back.html', message="Missing ASN file."), 400
 
-        # Save files locally
+        # Save ASN file locally
         asn_file_path = os.path.join(UPLOAD_FOLDER, asn_file.filename)
         asn_file.save(asn_file_path)
         print(f"Saved ASN file to: {asn_file_path}")
+        
+        # Save EDI file locally if provided
+        edi_file_path = None
+        if edi_file and edi_file.filename:
+            edi_file_path = os.path.join(UPLOAD_FOLDER, edi_file.filename)
+            edi_file.save(edi_file_path)
+            print(f"Saved EDI file to: {edi_file_path}")
+        else:
+            print("No EDI file provided or EDI file has no filename")
 
         # Determine company from Excel file
         company = get_company_from_excel(asn_file_path)
@@ -140,9 +159,36 @@ def upload_file():
                 label_output, _ = process_ThriveLabel(asn_file_path)
                 processed_files = [asn_output, label_output]
             elif company == "Murdochs":
-                asn_output, po_number = process_MurdochsASN(asn_file_path)
-                label_output, _ = process_MurdochsLabel(asn_file_path)
-                processed_files = [asn_output, label_output]
+                print(f"=== MURDOCHS PROCESSING DEBUG ===")
+                print(f"EDI file path: {edi_file_path}")
+                # Use the new two-step processing if EDI file is provided
+                if edi_file_path:
+                    print("Using two-step processing with EDI file")
+                    print(f"Calling process_murdochs_asn_with_labels with:")
+                    print(f"  - ASN file: {asn_file_path}")
+                    print(f"  - EDI file: {edi_file_path}")
+                    try:
+                        from processors.MurdochsASN import process_murdochs_asn_with_labels
+                        print("Successfully imported process_murdochs_asn_with_labels")
+                        asn_output, po_number = process_murdochs_asn_with_labels(asn_file_path, edi_file_path)
+                        print(f"Two-step processing completed. ASN output: {asn_output}")
+                        label_output, _ = process_MurdochsLabel(asn_file_path)
+                        processed_files = [asn_output, label_output]
+                    except Exception as e:
+                        print(f"Error in two-step processing: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Fall back to single-step processing
+                        print("Falling back to single-step processing")
+                        asn_output, po_number = process_MurdochsASN(asn_file_path)
+                        label_output, _ = process_MurdochsLabel(asn_file_path)
+                        processed_files = [asn_output, label_output]
+                else:
+                    print("Using single-step processing (no EDI file)")
+                    # Use original single-step processing
+                    asn_output, po_number = process_MurdochsASN(asn_file_path)
+                    label_output, _ = process_MurdochsLabel(asn_file_path)
+                    processed_files = [asn_output, label_output]
             elif company == "Scheels":
                 asn_output, po_number = process_ScheelsASN(asn_file_path)
                 label_output, _ = process_ScheelsLabel(asn_file_path)
@@ -171,6 +217,116 @@ def upload_file():
     except Exception as e:
         print(f"Upload error: {str(e)}")
         return render_template('back.html', message=f"Upload error: {str(e)}"), 500
+
+@app.route('/get_existing_asn_files')
+def get_existing_asn_files():
+    """Get list of existing ASN files from the Finished folder."""
+    try:
+        from flask import jsonify
+        files = []
+        for root, dirs, filenames in os.walk(FINISHED_FOLDER):
+            for filename in filenames:
+                if filename.endswith('.xlsx') and 'ASN' in filename:
+                    file_path = os.path.join(root, filename)
+                    # Get relative path for display
+                    rel_path = os.path.relpath(file_path, FINISHED_FOLDER)
+                    files.append({
+                        'name': filename,
+                        'path': file_path,
+                        'relative_path': rel_path
+                    })
+        
+        # Sort by modification time (newest first)
+        files.sort(key=lambda x: os.path.getmtime(x['path']), reverse=True)
+        
+        return jsonify({'files': files})
+    except Exception as e:
+        print(f"Error getting existing ASN files: {e}")
+        return jsonify({'files': [], 'error': str(e)})
+
+@app.route('/update_asn', methods=['POST'])
+def update_asn():
+    """Update an existing ASN file with carton labels from EDI file."""
+    try:
+        from flask import jsonify
+        # Get the existing ASN file path
+        existing_asn_path = request.form.get('existing_asn')
+        if not existing_asn_path or not os.path.exists(existing_asn_path):
+            return render_template('back.html', message="Invalid ASN file selected."), 400
+        
+        # Get the EDI file
+        edi_file = request.files.get('edi_file_update')
+        if not edi_file or not edi_file.filename:
+            return render_template('back.html', message="No EDI file uploaded."), 400
+        
+        # Save EDI file locally
+        edi_file_path = os.path.join(UPLOAD_FOLDER, edi_file.filename)
+        edi_file.save(edi_file_path)
+        print(f"Saved EDI file to: {edi_file_path}")
+        
+        print(f"=== UPDATING EXISTING ASN ===")
+        print(f"Existing ASN: {existing_asn_path}")
+        print(f"EDI file: {edi_file_path}")
+        
+        # Process the carton labels
+        try:
+            from processors.MurdochsASN import process_carton_labels_edi
+            updated_asn_path = process_carton_labels_edi(edi_file_path, existing_asn_path)
+            
+            # Create download link for updated file
+            processed_files = [updated_asn_path] if os.path.exists(updated_asn_path) else []
+            
+            return render_template('back.html', 
+                                 message="ASN updated successfully with carton labels!", 
+                                 processed_files=processed_files)
+                                 
+        except Exception as e:
+            print(f"Error updating ASN: {e}")
+            return render_template('back.html', message=f"Error updating ASN: {str(e)}"), 500
+            
+    except Exception as e:
+        print(f"Error in update_asn: {str(e)}")
+        return render_template('back.html', message=f"Error updating ASN: {str(e)}"), 500
+
+@app.route('/auto_match_edi', methods=['POST'])
+def auto_match_edi():
+    """Automatically match EDI file to existing ASN file and update it."""
+    try:
+        # Get the EDI file
+        edi_file = request.files.get('edi_file_auto_match')
+        if not edi_file or not edi_file.filename:
+            return render_template('back.html', message="No EDI file uploaded."), 400
+        
+        # Save EDI file locally
+        edi_file_path = os.path.join(UPLOAD_FOLDER, edi_file.filename)
+        edi_file.save(edi_file_path)
+        print(f"Saved EDI file to: {edi_file_path}")
+        
+        print(f"=== AUTO-MATCHING EDI TO ASN ===")
+        print(f"EDI file: {edi_file_path}")
+        
+        # Use the new auto-matching functionality
+        try:
+            from processors.MurdochsASN import process_edi_with_auto_match
+            updated_asn_path = process_edi_with_auto_match(edi_file_path)
+            
+            if updated_asn_path and os.path.exists(updated_asn_path):
+                # Create download link for updated file
+                processed_files = [updated_asn_path]
+                return render_template('back.html', 
+                                     message="EDI file automatically matched and ASN updated successfully!", 
+                                     processed_files=processed_files)
+            else:
+                return render_template('back.html', 
+                                     message="No matching ASN file found for this EDI file. Please check that the company name and PO number match an existing ASN."), 400
+                                 
+        except Exception as e:
+            print(f"Error in auto-match process: {e}")
+            return render_template('back.html', message=f"Error processing EDI file: {str(e)}"), 500
+            
+    except Exception as e:
+        print(f"Error in auto_match_edi: {str(e)}")
+        return render_template('back.html', message=f"Error processing EDI file: {str(e)}"), 500
 
 @app.route('/download/<path:file_path>')
 def download_file(file_path):
