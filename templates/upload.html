@@ -14,11 +14,11 @@
             <h1>ASN Automation</h1>
         </div>
 
-        <!-- Tab Navigation -->
-        <div class="tab-container">
+        <!-- Tab Navigation - Temporarily hidden -->
+        <!-- <div class="tab-container">
             <button class="tab-button active" onclick="showTab('new-asn')">Create New ASN</button>
             <button class="tab-button" onclick="showTab('auto-match')">Auto-Match EDI to ASN</button>
-        </div>
+        </div> -->
 
         <!-- Tab 1: Create New ASN -->
         <div id="new-asn" class="tab-content active">
@@ -32,21 +32,21 @@
                     </div>
                 </div>
 
-                <!-- EDI Carton Labels file upload (Optional) -->
-                <div id="edi-upload">
+                <!-- EDI Carton Labels file upload (Optional) - Temporarily hidden -->
+                <!-- <div id="edi-upload">
                     <div id="drop-area-edi">
                         <p>Drag and drop your EDI carton labels file here (Optional)</p>
                         <input type="file" id="edi_file_1" name="edi_file_1" accept=".xlsx, .xls" style="display:none;">
                         <div class="button-8" id="browseButtonEDI">Browse EDI File</div>
                     </div>
-                </div>
+                </div> -->
                 <br><br>
                 <button type="submit" class="button-8">Process Files</button>
             </form>
         </div>
 
-        <!-- Tab 2: Auto-Match EDI to ASN -->
-        <div id="auto-match" class="tab-content">
+        <!-- Tab 2: Auto-Match EDI to ASN - Temporarily hidden -->
+        <!-- <div id="auto-match" class="tab-content">
             <div style="text-align: center; margin-bottom: 20px;">
                 <p style="font-size: 16px; color: #5a2676; margin-bottom: 15px;">
                     <strong>Auto-Match EDI to ASN</strong>
@@ -58,7 +58,6 @@
             </div>
             
             <form id="autoMatchForm" action="/auto_match_edi" method="post" enctype="multipart/form-data">
-                <!-- EDI Carton Labels file upload for auto-matching -->
                 <div id="edi-upload-auto-match">
                     <div id="drop-area-edi-auto-match">
                         <p>Drag and drop your EDI carton labels file here</p>
@@ -69,11 +68,12 @@
                 <br><br>
                 <button type="submit" class="button-8">Auto-Match and Update ASN</button>
             </form>
-        </div>
+        </div> -->
     </div>
 
     <script>
-        // Tab functionality
+        // Tab functionality - Temporarily disabled
+        /*
         function showTab(tabName) {
             // Hide all tab contents
             const tabContents = document.querySelectorAll('.tab-content');
@@ -89,12 +89,15 @@
             // Add active class to clicked button
             event.target.classList.add('active');
         }
+        */
 
         // Original file upload functionality
         const asnDropArea = document.getElementById("drop-area-asn");
         const asnFileInput = document.getElementById("asn_file_1");
         const browseButtonASN = document.getElementById("browseButtonASN");
 
+        // EDI functionality - Temporarily disabled
+        /*
         const ediDropArea = document.getElementById("drop-area-edi");
         const ediFileInput = document.getElementById("edi_file_1");
         const browseButtonEDI = document.getElementById("browseButtonEDI");
@@ -103,17 +106,18 @@
         const ediDropAreaAutoMatch = document.getElementById("drop-area-edi-auto-match");
         const ediFileInputAutoMatch = document.getElementById("edi_file_auto_match");
         const browseButtonEDIAutoMatch = document.getElementById("browseButtonEDIAutoMatch");
+        */
 
-        // Prevent default drag behaviors
-        [asnDropArea, ediDropArea, ediDropAreaAutoMatch].forEach(area => {
+        // Prevent default drag behaviors - Only for ASN now
+        [asnDropArea].forEach(area => {
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 area.addEventListener(eventName, preventDefaults, false);
                 document.body.addEventListener(eventName, preventDefaults, false);
             });
         });
 
-        // Highlight drop area when item is dragged over it
-        [asnDropArea, ediDropArea, ediDropAreaAutoMatch].forEach(area => {
+        // Highlight drop area when item is dragged over it - Only for ASN now
+        [asnDropArea].forEach(area => {
             ['dragenter', 'dragover'].forEach(eventName => {
                 area.addEventListener(eventName, highlight, false);
             });
@@ -123,13 +127,15 @@
             });
         });
 
-        // Handle dropped files
+        // Handle dropped files - Only for ASN now
         asnDropArea.addEventListener("drop", e => {
             const dt = e.dataTransfer;
             const files = dt.files;
             if (files.length > 0) asnFileInput.files = files;
         });
 
+        // EDI drop handling - Temporarily disabled
+        /*
         ediDropArea.addEventListener("drop", e => {
             const dt = e.dataTransfer;
             const files = dt.files;
@@ -149,13 +155,15 @@
                 alert("EDI file selected for auto-match: " + files[0].name);
             }
         });
+        */
 
-        // Trigger file input on button click
+        // Trigger file input on button click - Only for ASN now
         browseButtonASN.addEventListener("click", () => asnFileInput.click());
-        browseButtonEDI.addEventListener("click", () => ediFileInput.click());
-        browseButtonEDIAutoMatch.addEventListener("click", () => ediFileInputAutoMatch.click());
+        // browseButtonEDI.addEventListener("click", () => ediFileInput.click());
+        // browseButtonEDIAutoMatch.addEventListener("click", () => ediFileInputAutoMatch.click());
 
-        // Add change event listeners to see when files are selected
+        // EDI change event listeners - Temporarily disabled
+        /*
         ediFileInput.addEventListener("change", function() {
             if (this.files.length > 0) {
                 console.log("EDI file selected via browse:", this.files[0].name);
@@ -169,24 +177,23 @@
                 alert("EDI file selected for auto-match via browse: " + this.files[0].name);
             }
         });
+        */
 
-        // Add form submission debugging
+        // Add form submission debugging - Simplified for ASN only
         document.getElementById("uploadForm").addEventListener("submit", function(e) {
             console.log("Form submitted!");
             console.log("ASN file:", asnFileInput.files[0]);
-            console.log("EDI file:", ediFileInput.files[0]);
             
             // Show alert with file info
             let message = "Files being uploaded:\n";
             if (asnFileInput.files[0]) {
                 message += "ASN: " + asnFileInput.files[0].name + "\n";
             }
-            if (ediFileInput.files[0]) {
-                message += "EDI: " + ediFileInput.files[0].name + "\n";
-            }
             alert(message);
         });
 
+        // Auto-match form submission - Temporarily disabled
+        /*
         document.getElementById("autoMatchForm").addEventListener("submit", function(e) {
             console.log("Auto-match form submitted!");
             console.log("EDI file for auto-match:", ediFileInputAutoMatch.files[0]);
@@ -198,6 +205,7 @@
             }
             alert(message);
         });
+        */
 
         function preventDefaults(e) {
             e.preventDefault();

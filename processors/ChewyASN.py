@@ -82,10 +82,12 @@ def convert_xls_data(uploaded_file, dest_file):
             sku = xls_sheet.cell_value(item_start_row - 1, 8)  # Column I for SKU
             total_lines += qty
 
+            # Get the original line number from column A of the uploaded file
+            original_line_number = xls_sheet.cell_value(item_start_row - 1, 0)  # Column A for line number
 
             # Repeat each field `qty` times in the output sheet
             for _ in range(qty):
-                source_ws[f'A{output_row}'] = output_row - 19  # Item No count (1, 2, 3, ...)
+                source_ws[f'A{output_row}'] = original_line_number  # Use original line number instead of sequential
                 source_ws[f'B{output_row}'] = qty  # QTY
                 source_ws[f'L{output_row}'] = description
                 source_ws[f'E{output_row}'] = upc14  # Placeholder for UPC if needed

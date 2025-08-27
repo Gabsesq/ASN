@@ -27,7 +27,7 @@ a = Analysis(
         ('assets/TSC', 'assets/TSC'),
         ('assets/TSC/Blank TSC ASN.xlsx', 'assets/TSC'),
 
-        ('assets/TSC IS', 'assets/TSC IS'),
+        ('assets/TSCIS', 'assets/TSCIS'),
 
         ('Finished/Chewy', 'Finished/Chewy'),
         ('Finished/Murdochs', 'Finished/Murdochs'),
